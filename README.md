@@ -105,7 +105,7 @@ Fornés, J., and Rebull, A. (2026). Spanish-Enigma: A research toolkit for the
 cryptanalysis of Spanish Enigma K traffic.
 https://github.com/jfornes/Spanish-Enigma
 [DOI pending: Zenodo registration in preparation]
-``
+```
 ## Contributing
 
 Contributions of additional transcriptions, corrected wirings, or

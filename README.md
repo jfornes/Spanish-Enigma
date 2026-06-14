@@ -117,6 +117,10 @@ Spanish Enigma. This repository complements rather than replaces
 their contributions; the wirings and procedures published in their
 work are reproduced here as data (with attribution) for reproducible
 analysis.
+AI assistants (Anthropic Claude) were used during development for
+code drafting, text editing, and methodological discussion. All
+archival research, historical interpretation, and final decisions
+are the author's responsibility.
 
 ---
 

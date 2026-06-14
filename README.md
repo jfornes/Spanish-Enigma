@@ -45,6 +45,7 @@ analysis of a corpus that is still largely unpublished.
 ---
 
 ## Repository structure (planned)
+```
 spanish-enigma/
 ├── data/
 │   ├── wirings/          # rotor wirings A–F, ETW, UKW (JSON)
@@ -55,6 +56,7 @@ spanish-enigma/
 ├── python/               # Python bindings and analysis notebooks
 ├── tests/
 └── doc/
+```
 The `data/` tree is the stable, citable core. The `src/` and
 `python/` trees are tooling that may evolve.
 

@@ -100,10 +100,12 @@ should be cited as indicated below.
 
 If you use this repository in academic work, please cite both the
 software and the accompanying paper:
+```
 Fornés, J., and Rebull, A. (2026). Spanish-Enigma: A research toolkit for the
 cryptanalysis of Spanish Enigma K traffic.
 https://github.com/jfornes/Spanish-Enigma
 [DOI pending: Zenodo registration in preparation]
+``
 ## Contributing
 
 Contributions of additional transcriptions, corrected wirings, or
@@ -122,7 +124,7 @@ analysis.
 AI assistants (Anthropic Claude) were used during development for
 code drafting, text editing, and methodological discussion. All
 archival research, historical interpretation, and final decisions
-are the author's responsibility.
+are the authors' responsibility.
 
 ---
 

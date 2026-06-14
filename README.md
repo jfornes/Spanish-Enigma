@@ -2,7 +2,7 @@
 
 A research toolkit for the cryptanalysis of Spanish Enigma K traffic
 (1936–1945), accompanying the work *Uns pocs republicans espanyols a
-l'Équipe D del Coronel Bertrand* (J. Fornés, 2026).
+l'Équipe D del Coronel Bertrand* (J. Fornés i A. Rebull, 2026).
 
 > **Status:** early development. The repository is currently a data
 > archive; the C/Python toolkit is planned for late 2026.

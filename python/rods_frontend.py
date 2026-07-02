@@ -14,6 +14,7 @@ Provenance of the methods is documented in rods.c.
 """
 import sys, os, json, re, argparse, itertools, unicodedata, ctypes, subprocess, platform
 import numpy as np
+import rodslib
 
 A="ABCDEFGHIJKLMNOPQRSTUVWXYZ"; c2n={c:i for i,c in enumerate(A)}
 def _load_wirings():
@@ -108,19 +109,9 @@ def ioc(s):
 
 # ---------- C bridge ----------
 def load_lib():
-    name='librods.dylib' if platform.system()=='Darwin' else 'librods.so'
-    here=os.path.dirname(os.path.abspath(__file__)); path=os.path.join(here,name)
-    if not os.path.exists(path):
-        flag=['-dynamiclib','-arch','x86_64','-arch','arm64'] if platform.system()=='Darwin' else ['-shared','-fPIC']
-        subprocess.check_call(['cc','-O3','-Wall',*flag,'-o',path,os.path.join(here,'rods.c'),'-lpthread'])
-    lib=ctypes.CDLL(path); P=ctypes.POINTER(ctypes.c_int); ci=ctypes.c_int
-    sig=[P,P,P,P, P,ci, P,ci,ci, P,ci,ci, P,ci]
-    lib.rod_search.argtypes=sig;           lib.rod_search.restype=ci
-    lib.coupling_search.argtypes=sig;      lib.coupling_search.restype=ci
-    lib.coupling_link_search.argtypes=sig; lib.coupling_link_search.restype=ci
-    lib.rod_search_sweep.argtypes=[P,P,P,P, P,ci, P,ci, ci,ci, P,ci,ci, P,ci]
-    lib.rod_search_sweep.restype=ci
-    return lib
+    """Return the librods CDLL with all kernels' argtypes configured. No auto-
+    compilation: build with `make` and/or set SPANISH_ENIGMA_LIB (see rodslib.py)."""
+    return rodslib.load()
 def _call(fn, wiring, cipher, crib, crib_off, grund, all_arr, threads, stride):
     wfwd=np.concatenate([vec(WIRINGS[wiring][k]) for k in('I','II','III')]).astype(np.int32)
     etwf=vec(ETW); ukwf=vec(UKW); turn=vec(''.join(WIN[k] for k in('I','II','III')))

@@ -21,6 +21,7 @@ Usage:
 import json, re, argparse, itertools, unicodedata, multiprocessing as mp
 import os, platform, subprocess, ctypes
 import numpy as np
+import rodslib
 
 A="ABCDEFGHIJKLMNOPQRSTUVWXYZ"; c2n={c:i for i,c in enumerate(A)}
 def _load_wirings():
@@ -53,20 +54,11 @@ ORDERS=[('I','II','III'),('I','III','II'),('II','I','III'),
 # ---------- C bridge (librods.so / .dylib, POSIX pthreads) ----------
 def vec(s): return np.array([c2n[c] for c in s], np.int32)
 def load_lib():
-    """Load librods, compiling it from rods.c on first use. Returns the CDLL or
-    None if no compiler / source is available (caller then falls back to numpy)."""
-    name='librods.dylib' if platform.system()=='Darwin' else 'librods.so'
-    here=os.path.dirname(os.path.abspath(__file__)); path=os.path.join(here,name)
-    src=os.path.join(here,'rods.c')
+    """Return the librods CDLL (kernel argtypes are configured in librods.load),
+    or None so the caller falls back to the numpy engine. No autocompilation:
+    build with `make` and/or set SPANISH_ENIGMA_LIB (see rodslib.py)."""
     try:
-        if not os.path.exists(path):
-            if not os.path.exists(src): return None
-            flag=['-dynamiclib','-arch','x86_64','-arch','arm64'] if platform.system()=='Darwin' else ['-shared','-fPIC']
-            subprocess.check_call(['cc','-O3','-Wall',*flag,'-o',path,src,'-lpthread'])
-        lib=ctypes.CDLL(path); P=ctypes.POINTER(ctypes.c_int); ci=ctypes.c_int
-        lib.rod_search_sweep.argtypes=[P,P,P,P, P,ci, P,ci, ci,ci, P,ci,ci, P,ci]
-        lib.rod_search_sweep.restype=ci
-        return lib
+        return rodslib.load()
     except Exception as e:
         print(f"[C bridge unavailable: {e} -> numpy fallback]"); return None
 def crib_search_c(lib, wiring, ct, crib, grund, all_arr, threads):

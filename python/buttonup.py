@@ -145,36 +145,88 @@ def brute_anchor(cons, ns, touched, max_sol=50, cap_each=200_000):
 
 
 # --------------------------------------------------------------------------- #
-def _selftest():
-    """Positive control: recover the wiring-F right rotor from a synthetic crib.
-    The 2-value anchor stands in for what rodding supplies in the real pipeline."""
+def _synthetic_F(nletters=70):
+    """Build a synthetic wiring-F crib (we control everything -> positive control).
+    Returns (cons, n_stretch, touched, rfF, n_letters)."""
     order = ('II', 'I', 'III'); W = cs.WIRINGS['F']
     rfF = cs.perm(W[order[2]])[0]
     windows = (c2n['A'], c2n['C'], c2n['O']); uwin = c2n['T']
     rings = (c2n['B'], c2n['D'], c2n['G'], c2n['Q'])
-    plain = ("SEHACONFIRMADOELMOVIMIENTODEBARCOSENEMIGOSHACIALASBALEARESTOMENSE" * 2)[:70]
+    plain = ("SEHACONFIRMADOELMOVIMIENTODEBARCOSENEMIGOSHACIALASBALEARESTOMENSE" * 3)[:nletters]
     p = [c2n[ch] for ch in plain]
     cipher = cs.decode_all('F', order, windows, uwin, rings, p)   # Enigma reciprocal -> encodes
     c = [c2n[ch] for ch in cipher]
     cons, ns, touched = build_constraints(order, windows, uwin, rings, p, c)
+    return cons, ns, touched, rfF, len(plain)
+
+
+# ---- C kernel binding: buttonup_anchor via the shared rodslib loader ----------
+import ctypes, rodslib
+def _load_lib():
+    """librods CDLL with buttonup_anchor's argtypes configured (see rodslib.py)."""
+    return rodslib.load()
+
+
+def solve_c(cons, ns, touched, nthreads=1, max_sols=400):
+    """Brute-force the anchor in C (no anchor needed). Returns (unique_sols, (a,b)).
+    Each solution is a length-26 list = recovered right-rotor forward wiring."""
+    import numpy as np
+    lib = _load_lib(); IP = ctypes.POINTER(ctypes.c_int)
+    cin = np.array([x[0] for x in cons], dtype=np.int32)
+    cout = np.array([x[1] for x in cons], dtype=np.int32)
+    co = np.array([x[2] for x in cons], dtype=np.int32)
+    cst = np.array([x[3] for x in cons], dtype=np.int32)
+    tou = np.array(touched, dtype=np.int32)
     per = {k: sum(1 for i, j, o, s in cons if i == k or j == k) for k in touched}
     a, b = sorted(touched, key=lambda k: -per[k])[:2]
-    anchors = {a: rfF[a], b: rfF[b]}                              # rodding-supplied coupling
-    sols, nodes = solve(cons, ns, touched, anchors)
-    ok = any(all(s[k] == rfF[k] for k in touched) for s in sols)
-    print(f"[selftest F]  {len(plain)} letters, {ns} stretches, "
+    out = np.zeros(max_sols * 26, dtype=np.int32)
+    n = lib.buttonup_anchor(
+        cin.ctypes.data_as(IP), cout.ctypes.data_as(IP),
+        co.ctypes.data_as(IP), cst.ctypes.data_as(IP), len(cons),
+        int(ns), tou.ctypes.data_as(IP), len(touched),
+        int(a), int(b), int(nthreads), out.ctypes.data_as(IP), max_sols)
+    if n < 0:
+        raise RuntimeError(f"buttonup_anchor: nstr={ns} exceeds kernel MAXSTR")
+    seen = {}
+    for i in range(n):
+        s = [int(x) for x in out[i*26:(i+1)*26]]
+        seen[tuple(s[k] for k in touched)] = s
+    return list(seen.values()), (a, b)
+
+
+def _selftest(nthreads=1, use_c=False):
+    """Recover the wiring-F right rotor from a synthetic crib.
+    python path: rodding anchor (2 true values).  C path: anchor brute-forced."""
+    cons, ns, touched, rfF, nlet = _synthetic_F()
+    per = {k: sum(1 for i, j, o, s in cons if i == k or j == k) for k in touched}
+    a, b = sorted(touched, key=lambda k: -per[k])[:2]
+    tag = "C" if use_c else "py"
+    if use_c:
+        sols, (a, b) = solve_c(cons, ns, touched, nthreads=nthreads); nodes = None
+    else:
+        sols, nodes = solve(cons, ns, touched, {a: rfF[a], b: rfF[b]})
+    match = [s for s in sols if all(s[k] == rfF[k] for k in touched)]
+    ok = len(match) >= 1
+    detail = (f"nodes={nodes}; anchor from rodding"
+              if nodes is not None
+              else f"threads={nthreads}; anchor brute-forced 26x26")
+    print(f"[selftest {tag}]  {nlet} letters, {ns} stretches, "
           f"{len(touched)} contacts, {len(cons)} constraints")
-    print(f"[selftest F]  anchor contacts {a},{b} (from rodding); nodes={nodes}; "
-          f"solutions={len(sols)}")
-    print(f"[selftest F]  recovered right rotor == true wiring F: {ok}")
+    print(f"[selftest {tag}]  anchor contacts {a},{b}; {detail}; solutions={len(sols)}")
+    print(f"[selftest {tag}]  recovered right rotor == true wiring F: {ok}")
     return ok
 
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="Buttoning-up: recover the fast-rotor wiring.")
-    ap.add_argument("--selftest", action="store_true", help="recover wiring F from a synthetic crib")
+    ap.add_argument("--selftest", action="store_true",
+                    help="python reference: recover wiring F (rodding anchor)")
+    ap.add_argument("--selftest-c", action="store_true",
+                    help="C kernel: recover wiring F (anchor brute-forced 26x26)")
+    ap.add_argument("--procs", type=int, default=1, help="threads for the C kernel (default 1)")
     a = ap.parse_args()
     if a.selftest:
-        sys.exit(0 if _selftest() else 1)
+        sys.exit(0 if _selftest(use_c=False) else 1)
+    if a.selftest_c:
+        sys.exit(0 if _selftest(nthreads=a.procs, use_c=True) else 1)
     ap.print_help()
-

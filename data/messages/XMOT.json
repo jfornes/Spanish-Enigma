@@ -1,0 +1,21 @@
+[
+  {
+    "archive": "CDMH",
+    "signature": "Caja 745",
+    "date_transmission": "1936-12-11",
+    "date_interception": "1936-12-11",
+    "sender": "Generalísimo, Cuartel General (Salamanca)",
+    "recipient": "Comandante Militar de Baleares (Palma de Mallorca)",
+    "header": ["ZYPY", "VZRY", "XMOT", "RSPG"],
+    "grundstellung": "XMOT",
+    "body": "AGSZ FAEQ LHDF URWM PHEF FFNR <PLAIN: de que me da cuenta en sus telegramas es> AIAO SSCA OLZW HVMK GYKS ZHDL MCHI RCEQ SSUY JMXB OAUD UXFR USFT AIRA THLW RQKK TJOX GCCO PYCV ZZJW RXHF BVVP FAVA VBDD PVQH LFMJ UJRA TOMX",
+    "garble_check": "TOMX",
+    "reference": "Ref 3980 y 38",
+    "classification": "enigma_k_certified",
+    "ic": 0.0392,
+    "n": 152,
+    "source_type": "typed_intercept",
+    "notes": "Strongest certification (4/4 lines). Doubled 2-group blocks (FAEQ LHDF; OLZW HVMK) are retransmission artifacts, not cipher; de-doubled body = 38 groups, IC quoted is de-doubled. Grundstellung XMOT transmitted in clear; embedded plaintext mid-body = crib. Page bears red GABINETE DE CIFRA stamp + ENTRADA stamp (11 DIC 1936, 10:35). Priority decryption target."
+  }
+]
+

@@ -1,0 +1,6 @@
+librods.so
+librods.dylib
+*.o
+__pycache__/
+*.pyc
+.DS_Store

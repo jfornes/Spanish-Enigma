@@ -1,0 +1,23 @@
+{
+  "archive": "CDMH",
+  "signature": "Caja 745",
+  "date_transmission": "1936-12-06",
+  "date_interception": "1936-12-08",
+  "sender": "Comandante de Marina de Baleares (Palma de Mallorca)",
+  "recipient": "Almirante Jefe del E.M. (Salamanca)",
+  "header": [
+    "LFMT",
+    "PEHV",
+    "LUIS",
+    "DDHB"
+  ],
+  "grundstellung": "LUIS",
+  "body": "OBAL XWWB JUKR UFUD LHEM CICJ TWYQ NCRO LYGK QLVU EPOU UYZV GYWG AKDY NLKV VMOD KPBZ FFNY YRGJ SIVL",
+  "garble_check": "SIUL",
+  "reference": "ref y 24",
+  "classification": "enigma_k_probable",
+  "ic": 0.0377,
+  "n": 80,
+  "source_type": "typed_intercept",
+  "notes": "Grundstellung LUIS is a memorable 'cilly' key. Garble check SIUL = reverse(LUIS); image last group reads SIVL (U/V typewriter ambiguity). Certification rests on garble + cilly key + endpoints + same series as nr 94, NOT on IC (0.0377 at the band edge, N=80 too small to decide)."
+}

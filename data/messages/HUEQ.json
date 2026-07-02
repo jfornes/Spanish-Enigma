@@ -1,0 +1,18 @@
+{
+  "archive": "CDMH",
+  "signature": "Caja 745",
+  "date_transmission": "1936-12-05",
+  "date_interception": null,
+  "sender": "Comandante de Marina de Baleares (Palma de Mallorca)",
+  "recipient": "Generalísimo (Salamanca)",
+  "header": null,
+  "grundstellung": null,
+  "body": "HUEQ GPGJ HLHF VUAC SAHM ZHPQ KGYH IEBU NVNS LYHU DEPW PHUW GFNX JQXN FPNX EJST IVWZ LIFQ MNMP VOZC VPTG RYYZ VHNB YRVE YDRR KRAZ HASH QYQL AAKI KFQF JDHG OWKA SKTC BUSQ NMGC VNLG QZKB SFAV ZBRL JOWC SALW XSAL XCKM",
+  "garble_check": null,
+  "reference": "ref 1441 y 49",
+  "classification": "candidate",
+  "ic": 0.0373,
+  "n": 172,
+  "source_type": "analyst_manuscript",
+  "notes": "nr 56, 'el 5 a las 18,35'. Hand-copied analyst working note, NOT a raw intercept. Routing header extracted to a call-sign legend (Palma / Salamanca), so garble/Grundstellung not in body — absence is non-diagnostic. Same series as nr 94 (LUIS). IC 0.0373 marginally below band; handwriting transcription uncertain (H written as 4). Cannot be formally certified from this copy."
+}

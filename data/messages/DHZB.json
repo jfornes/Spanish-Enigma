@@ -1,0 +1,23 @@
+{
+  "archive": "CDMH",
+  "signature": "Caja 745",
+  "date_transmission": "1936-12-07",
+  "date_interception": "1936-12-08",
+  "sender": "Comandante de Ingenieros, Cuartel General (Salamanca)",
+  "recipient": "Comandante Jefe E.M. de Baleares (Palma de Mallorca)",
+  "header": [
+    "YPSQ",
+    "VHRH",
+    "DHZB",
+    "NWTC"
+  ],
+  "grundstellung": "DHZB",
+  "body": "WREO DAVV WOQR PODI UJCJ SOZU MICW YTYE ORWZ FBOR JQDO YXNM EHRM HDTY VSST YZSL ATRG UUST MZDG GSJL BZHD",
+  "garble_check": "BZHD",
+  "reference": "Ref 3644",
+  "classification": "enigma_k",
+  "ic": 0.0402,
+  "n": 84,
+  "source_type": "typed_intercept",
+  "notes": "nr 69 'el 7 a las 01.40' (your template showed 1936-12-06; document reads day 7). Repetition of an earlier message ('Me refiero a error en YPSQ VHRH DHZB NWTC') — the 4-group indicator is quoted in clear, reusing Grundstellung DHZB. ACTIONABLE: locate the original message with this same header for a depth pair. DHZB is the Grundstellung whose wiring-F brute force failed; retry with wiring C."
+}

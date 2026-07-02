@@ -1,0 +1,50 @@
+{
+  "description": "Commercial Enigma K wirings and static components — Spanish Civil War traffic (Salamanca <-> Baleares, 1936-37).",
+  "alphabet": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+  "etw": "QWERTZUIOASDFGHJKPYXCVBNML",
+  "ukw": "IMETCGFRAYSQBZXWLHKDVUPOJN",
+  "turnovers": {
+    "I": "Y",
+    "II": "E",
+    "III": "N"
+  },
+  "source": "Soler Fuensanta, Lopez-Brea Espiau & Weierud, 'Enigma variations: an extended family of machines', Cryptologia 34(4), 2010. D and F recovered from captured Heimsoeth & Rinke / ChiMaG manufacturer documents (TICOM), not cryptanalytically.",
+  "sets_status": {
+    "D": "available (captured documents)",
+    "F": "available (captured documents)",
+    "A": "not available",
+    "B": "not available",
+    "E": "not available",
+    "C": "NOT available — cryptanalytic recovery target (DHZB / LUIS / MVNR traffic)"
+  },
+  "rotor_sets": {
+    "D": {
+      "I": {
+        "wiring": "CIAHFQOYBXNUWJLVGEMSZKPDTR",
+        "turnover": "Y"
+      },
+      "II": {
+        "wiring": "KEDXVBSQHNCZTRUFLOAYWIPMJG",
+        "turnover": "E"
+      },
+      "III": {
+        "wiring": "NUJPHWFMGDOBAVZQTXECLKYSIR",
+        "turnover": "N"
+      }
+    },
+    "F": {
+      "I": {
+        "wiring": "HFOTWPDURMCGXJLQEIVZSKBNAY",
+        "turnover": "Y"
+      },
+      "II": {
+        "wiring": "MUHTASIPJYNCVKLOXFDZEGQBWR",
+        "turnover": "E"
+      },
+      "III": {
+        "wiring": "DKWOJVUNGLFTZCSYIBEARHXQPM",
+        "turnover": "N"
+      }
+    }
+  }
+}

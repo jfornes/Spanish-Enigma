@@ -16,11 +16,20 @@ import sys, os, json, re, argparse, itertools, unicodedata, ctypes, subprocess, 
 import numpy as np
 
 A="ABCDEFGHIJKLMNOPQRSTUVWXYZ"; c2n={c:i for i,c in enumerate(A)}
-WIRINGS={
- 'D':{'I':"CIAHFQOYBXNUWJLVGEMSZKPDTR",'II':"KEDXVBSQHNCZTRUFLOAYWIPMJG",'III':"NUJPHWFMGDOBAVZQTXECLKYSIR"},
- 'F':{'I':"HFOTWPDURMCGXJLQEIVZSKBNAY",'II':"MUHTASIPJYNCVKLOXFDZEGQBWR",'III':"DKWOJVUNGLFTZCSYIBEARHXQPM"},
-}
-UKW="IMETCGFRAYSQBZXWLHKDVUPOJN"; ETW="QWERTZUIOASDFGHJKPYXCVBNML"; WIN={'I':'Y','II':'E','III':'N'}
+def _load_wirings():
+    """Machine wirings from data/wirings/wirings.json (searched next to this file
+    and at ../data/wirings/ for the repo layout) -- shared single source of truth
+    with corpus_sweep.py; the C library receives these as parameters."""
+    here=os.path.dirname(os.path.abspath(__file__))
+    for cand in (os.path.join(here,'wirings.json'),
+                 os.path.join(here,'..','data','wirings','wirings.json'),
+                 os.path.join(here,'data','wirings','wirings.json')):
+        if os.path.exists(cand):
+            with open(cand,encoding='utf-8') as fh: return json.load(fh)
+    raise FileNotFoundError("wirings.json not found (looked next to the script and in ../data/wirings/)")
+_WIR=_load_wirings()
+WIRINGS={s:{r:d['wiring'] for r,d in rot.items()} for s,rot in _WIR['rotor_sets'].items()}
+UKW=_WIR['ukw']; ETW=_WIR['etw']; WIN=_WIR['turnovers']
 ORDERS=[(0,1,2),(0,2,1),(1,0,2),(1,2,0),(2,0,1),(2,1,0)]   # must match rods.c
 NAMES=['I','II','III']
 def vec(s): return np.array([c2n[c] for c in s], dtype=np.int32)
@@ -109,6 +118,8 @@ def load_lib():
     lib.rod_search.argtypes=sig;           lib.rod_search.restype=ci
     lib.coupling_search.argtypes=sig;      lib.coupling_search.restype=ci
     lib.coupling_link_search.argtypes=sig; lib.coupling_link_search.restype=ci
+    lib.rod_search_sweep.argtypes=[P,P,P,P, P,ci, P,ci, ci,ci, P,ci,ci, P,ci]
+    lib.rod_search_sweep.restype=ci
     return lib
 def _call(fn, wiring, cipher, crib, crib_off, grund, all_arr, threads, stride):
     wfwd=np.concatenate([vec(WIRINGS[wiring][k]) for k in('I','II','III')]).astype(np.int32)
@@ -121,6 +132,16 @@ def _call(fn, wiring, cipher, crib, crib_off, grund, all_arr, threads, stride):
 def brute(lib,*a):    return _call(lib.rod_search,*a,6)
 def coupling(lib,*a): return _call(lib.coupling_search,*a,3)
 def link(lib,*a):     return _call(lib.coupling_link_search,*a,4)
+def sweep_offsets(lib, wiring, cipher, crib, grund, all_arr, threads):
+    """Offsets where the crib is satisfiable (crib position unknown). Returns a
+    list of offsets with multiplicity (one per consistent arrangement/ring)."""
+    wfwd=np.concatenate([vec(WIRINGS[wiring][k]) for k in('I','II','III')]).astype(np.int32)
+    etwf=vec(ETW); ukwf=vec(UKW); turn=vec(''.join(WIN[k] for k in('I','II','III')))
+    ct=np.asarray(cipher,np.int32); cr=np.asarray(crib,np.int32); g=vec(grund)
+    out=np.zeros(7*8192,np.int32); P=lambda x:x.ctypes.data_as(ctypes.POINTER(ctypes.c_int))
+    nh=lib.rod_search_sweep(P(wfwd),P(etwf),P(ukwf),P(turn),P(ct),len(ct),P(cr),len(cr),
+                            0,len(ct)-len(cr),P(g),1 if all_arr else 0,threads,P(out),8192)
+    return [int(out[7*i]) for i in range(nh)]
 def order_name(oi): return '-'.join(NAMES[w] for w in ORDERS[oi])
 def arr_letters(ai, grund, all_arr):
     arr=[(a,b,d) for a in range(4) for b in range(4) for d in range(4) if len({a,b,d})==3] if all_arr else [(0,1,2)]
@@ -183,6 +204,7 @@ def main():
     p.add_argument("--all", action="store_true", help="sweep all 24 Grundstellung arrangements")
     p.add_argument("--threads", type=int, default=os.cpu_count())
     p.add_argument("--wirings", default="D,F")
+    p.add_argument("--crib", help="known-plaintext crib; its offset is found by sweep (robust to cipher edits)")
     a=p.parse_args()
     if not a.json: usage(p); sys.exit(0)
     lib=load_lib()
@@ -227,6 +249,13 @@ def main():
     msg=load_message(a.json,a.picker); cipher,grund,cribs=build_cribs(msg); cti=vec(cipher)
     print(f"\n# {msg.get('signature','?')}  G={grund}  cipher_len={len(cipher)}")
     print(f"# IoC (computed here) = {ioc(cipher):.4f}  (JSON quotes {msg.get('ic')})")
+    if a.crib:                                          # --crib overrides alignment; offset by sweep
+        crib=norm(a.crib); from collections import Counter; offs=[]
+        for w in a.wirings.split(','):
+            offs+=sweep_offsets(lib,w,cti,vec(crib),grund,a.all,a.threads)
+        if not offs: sys.exit(f"crib '{crib}' not found at any offset (check spelling / --wirings)")
+        off=Counter(offs).most_common(1)[0][0]; cribs=[(off,crib)]
+        print(f"# crib '{crib}' located @offset {off} by sweep")
     if not cribs: sys.exit("no cleanly-aligned crib block")
     off,crib=max(cribs,key=lambda z:len(z[1]))
     print(f"# crib @offset {off} ({len(crib)}): {crib}")

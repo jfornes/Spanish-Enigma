@@ -23,11 +23,21 @@ import os, platform, subprocess, ctypes
 import numpy as np
 
 A="ABCDEFGHIJKLMNOPQRSTUVWXYZ"; c2n={c:i for i,c in enumerate(A)}
-WIRINGS={
- 'D':{'I':"CIAHFQOYBXNUWJLVGEMSZKPDTR",'II':"KEDXVBSQHNCZTRUFLOAYWIPMJG",'III':"NUJPHWFMGDOBAVZQTXECLKYSIR"},
- 'F':{'I':"HFOTWPDURMCGXJLQEIVZSKBNAY",'II':"MUHTASIPJYNCVKLOXFDZEGQBWR",'III':"DKWOJVUNGLFTZCSYIBEARHXQPM"},
-}
-UKW="IMETCGFRAYSQBZXWLHKDVUPOJN"; ETW="QWERTZUIOASDFGHJKPYXCVBNML"; WIN={'I':'Y','II':'E','III':'N'}
+def _load_wirings():
+    """Machine wirings from data/wirings/wirings.json (searched next to this file
+    and at ../data/wirings/ for the repo layout). Single source of truth for rotor
+    wirings, ETW, UKW and turnovers; the C library receives these as parameters, so
+    this one file feeds both the numpy and the C engines."""
+    here=os.path.dirname(os.path.abspath(__file__))
+    for cand in (os.path.join(here,'wirings.json'),
+                 os.path.join(here,'..','data','wirings','wirings.json'),
+                 os.path.join(here,'data','wirings','wirings.json')):
+        if os.path.exists(cand):
+            with open(cand,encoding='utf-8') as fh: return json.load(fh)
+    raise FileNotFoundError("wirings.json not found (looked next to the script and in ../data/wirings/)")
+_WIR=_load_wirings()
+WIRINGS={s:{r:d['wiring'] for r,d in rot.items()} for s,rot in _WIR['rotor_sets'].items()}
+UKW=_WIR['ukw']; ETW=_WIR['etw']; WIN=_WIR['turnovers']
 NAMES=['I','II','III']
 FRAG=["DE","LA","EN","QUE","EL","LOS","LAS","POR","CON","UNA","PARA","SOBRE","MENTE","CION",
       "ENTE","ADO","ENEMIG","FUERZA","ORDEN","BALEARES","PALMA","MALLORCA","MANDO","BUQUE",

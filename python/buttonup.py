@@ -217,16 +217,103 @@ def _selftest(nthreads=1, use_c=False):
     return ok
 
 
+# --------------------------------------------------------------------------- #
+# Middle rotor: Rejewski-style recovery from the per-offset involutions.
+# Once the right rotor rf is known, peeling it off leaves, within a stretch where
+# the LEFT rotor is static, the middle rotor mf plus a FIXED involution C
+# (left+UKW composite). At each middle-rotor offset o the crib yields an involution
+#   E_o = mf_o^-1 . C . mf_o           (mf_o = the middle wheel conjugated by o)
+# Writing Q_o = shift_o . E_o . shift_-o gives Q_o = mf^-1 . C_o . mf, and for
+# CONSECUTIVE offsets  Q_{o+1} = M . Q_o . M^-1  with  M = mf^-1 . (+1) . mf, a
+# single 26-cycle. Propagating M over well-covered consecutive offsets recovers it;
+# mf then follows from M's cycle (mf(M(x)) = mf(x)+1), unique up to the global gauge
+# shift (harmless -- absorbed by the neighbouring rotor). Pure 26-point combinatorics.
+
+def build_middle_involutions(order, windows, uwin, rings, rf, plain_ints, cipher_ints):
+    """Peel the known right rotor rf; tabulate, per middle offset, the involution
+    E_o pairing the middle rotor's external contacts. Returns {offset: {a: b}}."""
+    rR, rM = rings[3], rings[2]
+    seq = cs.posseq(order, windows, len(plain_ints))
+    E = {}
+    for t in range(len(plain_ints)):
+        oR = (seq[t][2] - rR) % 26; oM = (seq[t][1] - rM) % 26
+        a1 = (rf[(ETWR[plain_ints[t]] + oR) % 26] - oR) % 26
+        a6 = (rf[(ETWR[cipher_ints[t]] + oR) % 26] - oR) % 26
+        d = E.setdefault(oM, {}); d[a1] = a6; d[a6] = a1
+    return E
+
+def recover_middle(E, min_cov=22):
+    """Recover the middle-rotor wiring from the per-offset involutions E. Returns a
+    list of mf candidates (length-26 lists), each valid up to a global gauge shift.
+    Needs enough well-covered CONSECUTIVE offsets for the M-propagation to span all
+    26 contacts (transitivity); a short crib (few offsets) is under-determined."""
+    cov = {o: len(E[o]) for o in E}
+    def build_Q(Ed, o):
+        Ec = dict(Ed); miss = [x for x in range(26) if x not in Ec]
+        if len(miss) == 2: a, b = miss; Ec[a] = b; Ec[b] = a   # a 2-gap involution completes uniquely
+        return [(Ec[(y - o) % 26] + o) % 26 if (y - o) % 26 in Ec else None for y in range(26)]
+    Q = {o: build_Q(E[o], o) for o in E}
+    rel = [(o, (o + 1) % 26) for o in range(26)
+           if o in Q and (o + 1) % 26 in Q and cov.get(o, 0) >= min_cov and cov.get((o + 1) % 26, 0) >= min_cov]
+    def propagate(sv):
+        M = [None] * 26; M[0] = sv; used = [False] * 26; used[sv] = True; ch = True
+        while ch:
+            ch = False
+            for x in range(26):
+                if M[x] is None: continue
+                for oa, ob in rel:
+                    if Q[oa][x] is not None and Q[ob][M[x]] is not None:
+                        nx, nv = Q[oa][x], Q[ob][M[x]]
+                        if M[nx] is None:
+                            if used[nv]: return None
+                            M[nx] = nv; used[nv] = True; ch = True
+                        elif M[nx] != nv: return None
+        return M
+    out = []
+    for sv in range(26):
+        M = propagate(sv)
+        if not M or any(v is None for v in M) or len(set(M)) != 26: continue
+        x, n = 0, 0                                             # require a single 26-cycle
+        while True:
+            x = M[x]; n += 1
+            if x == 0: break
+        if n != 26: continue
+        mf = [0] * 26; cc, val = 0, 0
+        for _ in range(26): mf[cc] = val % 26; cc = M[cc]; val += 1
+        if mf not in out: out.append(mf)
+    return out
+
+def _selftest_middle():
+    """Positive control: recover the wiring-F middle rotor (right rotor given)."""
+    order = ('II', 'I', 'III'); Wf = cs.WIRINGS['F']
+    rf = cs.perm(Wf[order[2]])[0]; mfT = list(cs.perm(Wf[order[1]])[0])
+    windows = (c2n['A'], c2n['C'], c2n['O']); uwin = c2n['T']
+    rings = (c2n['B'], c2n['D'], c2n['G'], c2n['Q'])
+    plain = ("SEHACONFIRMADOELMOVIMIENTODEBARCOSENEMIGOSHACIALASBALEARESTOMENSEATAQUEINMINENTEALASBALEARES" * 4)[:300]
+    p = [c2n[ch] for ch in plain]
+    c = [c2n[ch] for ch in cs.decode_all('F', order, windows, uwin, rings, p)]
+    E = build_middle_involutions(order, windows, uwin, rings, rf, p, c)
+    cands = recover_middle(E)
+    ok = any(len({(m[k] - mfT[k]) % 26 for k in range(26)}) == 1 for m in cands)
+    print(f"[selftest middle]  {len(plain)} letters, offsets {sorted(E)}")
+    print(f"[selftest middle]  candidates {len(cands)}; middle rotor recovered up to gauge: {ok}")
+    return ok
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="Buttoning-up: recover the fast-rotor wiring.")
     ap.add_argument("--selftest", action="store_true",
                     help="python reference: recover wiring F (rodding anchor)")
     ap.add_argument("--selftest-c", action="store_true",
                     help="C kernel: recover wiring F (anchor brute-forced 26x26)")
+    ap.add_argument("--selftest-middle", action="store_true",
+                    help="recover the wiring-F MIDDLE rotor from consecutive E_o involutions")
     ap.add_argument("--procs", type=int, default=1, help="threads for the C kernel (default 1)")
     a = ap.parse_args()
     if a.selftest:
         sys.exit(0 if _selftest(use_c=False) else 1)
     if a.selftest_c:
         sys.exit(0 if _selftest(nthreads=a.procs, use_c=True) else 1)
+    if a.selftest_middle:
+        sys.exit(0 if _selftest_middle() else 1)
     ap.print_help()

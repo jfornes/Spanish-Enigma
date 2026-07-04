@@ -300,6 +300,72 @@ def _selftest_middle():
     return ok
 
 
+# --------------------------------------------------------------------------- #
+# Left rotor: recovery across messages at DISTINCT left-window positions.
+# The left rotor steps only ~once per 676 letters, so a normal message holds it
+# static (one offset). Peeling off the known R and M, each crib letter links two
+# left contacts through the KNOWN reflector: L[bb] = g_oL(L[a]). At a single left
+# offset these edges form a matching (under-determined); distinct left offsets from
+# several messages connect the graph. In practice ~3 left-window positions suffice.
+# Because the reflector is fixed, the left rotor is pinned EXACTLY -- no gauge.
+
+def build_left_edges(order, windows, uwin, rings, R, Mid, plain_ints, cipher_ints):
+    """Peel the known right rotor R and middle rotor Mid; return left-rotor edges
+    (a, bb, oL) for ONE message. windows=(L,M,R), rings=(U,L,M,R)."""
+    rR, rM, rL = rings[3], rings[2], rings[1]
+    seq = cs.posseq(order, windows, len(plain_ints))
+    def conj(perm, off, x): return (perm[(x + off) % 26] - off) % 26
+    edges = []
+    for t in range(len(plain_ints)):
+        oR = (seq[t][2] - rR) % 26; oM = (seq[t][1] - rM) % 26; oL = (seq[t][0] - rL) % 26
+        b1 = conj(Mid, oM, conj(R, oR, ETWR[plain_ints[t]]))
+        b6 = conj(Mid, oM, conj(R, oR, ETWR[cipher_ints[t]]))
+        edges.append(((b1 + oL) % 26, (b6 + oL) % 26, oL))
+    return edges
+
+def recover_left(edges, u):
+    """Recover the left-rotor wiring from edges pooled across messages. u = the
+    reflector offset (shared). Returns full L candidates (length-26 lists); exact,
+    no gauge. A single left offset is under-determined; pool several distinct ones."""
+    UKWF = cs.UKWF
+    def g(v, oL): return (UKWF[((v - oL) % 26 + u) % 26] - u + oL) % 26
+    a0 = edges[0][0]; out = []
+    for v0 in range(26):
+        L = [None] * 26; L[a0] = v0; used = [False] * 26; used[v0] = True; ch = True; bad = False
+        while ch and not bad:
+            ch = False
+            for a, bb, oL in edges:
+                for x, y in ((a, bb), (bb, a)):
+                    if L[x] is not None:
+                        nv = g(L[x], oL)
+                        if L[y] is None:
+                            if used[nv]: bad = True; break
+                            L[y] = nv; used[nv] = True; ch = True
+                        elif L[y] != nv: bad = True; break
+                if bad: break
+        if not bad and all(x is not None for x in L) and len(set(L)) == 26 and L not in out:
+            out.append(L)
+    return out
+
+def _selftest_left():
+    """Positive control: recover the wiring-F LEFT rotor (R and M given) from three
+    messages at distinct left-window positions."""
+    order = ('II', 'I', 'III'); Wf = cs.WIRINGS['F']
+    R = cs.perm(Wf[order[2]])[0]; Mid = cs.perm(Wf[order[1]])[0]; Lt = list(cs.perm(Wf[order[0]])[0])
+    uwin = c2n['T']; rings = (c2n['B'], c2n['D'], c2n['G'], c2n['Q']); u = (uwin - rings[0]) % 26
+    plain = ("SEHACONFIRMADOELMOVIMIENTODEBARCOSENEMIGOSHACIALASBALEARESTOMENSEATAQUE" * 2)[:96]
+    p = [c2n[ch] for ch in plain]; edges = []
+    for Lw in (c2n['A'], c2n['F'], c2n['K']):
+        windows = (Lw, c2n['C'], c2n['O'])
+        c = [c2n[ch] for ch in cs.decode_all('F', order, windows, uwin, rings, p)]
+        edges += build_left_edges(order, windows, uwin, rings, R, Mid, p, c)
+    cands = recover_left(edges, u)
+    ok = any(L == Lt for L in cands)
+    print(f"[selftest left]  3 left positions; candidates {len(cands)}; "
+          f"left rotor recovered exactly (no gauge): {ok}")
+    return ok
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="Buttoning-up: recover the fast-rotor wiring.")
     ap.add_argument("--selftest", action="store_true",
@@ -308,6 +374,8 @@ if __name__ == "__main__":
                     help="C kernel: recover wiring F (anchor brute-forced 26x26)")
     ap.add_argument("--selftest-middle", action="store_true",
                     help="recover the wiring-F MIDDLE rotor from consecutive E_o involutions")
+    ap.add_argument("--selftest-left", action="store_true",
+                    help="recover the wiring-F LEFT rotor from 3 messages at distinct left positions")
     ap.add_argument("--procs", type=int, default=1, help="threads for the C kernel (default 1)")
     a = ap.parse_args()
     if a.selftest:
@@ -316,4 +384,6 @@ if __name__ == "__main__":
         sys.exit(0 if _selftest(nthreads=a.procs, use_c=True) else 1)
     if a.selftest_middle:
         sys.exit(0 if _selftest_middle() else 1)
+    if a.selftest_left:
+        sys.exit(0 if _selftest_left() else 1)
     ap.print_help()

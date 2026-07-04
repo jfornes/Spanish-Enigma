@@ -1,0 +1,85 @@
+{
+  "_about": "Registry of Enigma machines and cipher stations in the Spanish theatre (Caja 745 context). Two INDEPENDENT axes: machine TYPE (chassis/family) and WIRING (rotor Schaltung, named by German phonetic alphabet). Fill in as archive material appears. Keep 'source' and 'confidence' on every row (data vs inference).",
+  "_schema": {
+    "serial": "machine serial if known (e.g. A1236, A17316S); else null",
+    "type": "one of: commercial_unsteckered | funkschluessel_M | legion_condor_numbered | unknown",
+    "plugboard": "true/false (commercial family = false; M and Condor variant = true)",
+    "wiring": "rotor wiring nickname: D (Dora) | F (Friedrich) | C (Caesar, unpublished target) | unknown",
+    "digits_on_rotors": "true only for the Legion Condor variant (numbers instead of letters)",
+    "holder": "unit / service that held or used it",
+    "location": "base or area",
+    "period": "date or span",
+    "source": "document / publication reference",
+    "confidence": "sourced | likely | inferred",
+    "notes": "free text"
+  },
+  "wiring_nicknames": {
+    "C": "Caesar  -- unpublished; the recovery target for DHZB/LUIS",
+    "D": "Dora    -- Schaltung D; commercial unsteckered machines; also Italian Army/Navy (Soler 2010)",
+    "F": "Friedrich -- the wiring of the XMOT message (certified)",
+    "_note": "these label ROTOR WIRINGS, not machine models; do not confuse Schaltung D with reflector UKW D"
+  },
+  "machine_types": {
+    "commercial_unsteckered": "commercial Enigma (D/K family), no plugboard, QWERTZ ETW -- the SPANISH/Italian machines ('Dora'); the toolkit's domain",
+    "funkschluessel_M": "Kriegsmarine naval Enigma M, plugboard, letters on rotors -- German only",
+    "legion_condor_numbered": "'same principle as Funkschluessel M but NUMBERS on the rotors instead of letters' -- German (Legion Condor), plugboard"
+  },
+  "machines": [
+    {"serial": "A1236", "type": "commercial_unsteckered", "plugboard": false, "wiring": "D", "digits_on_rotors": false,
+     "holder": "Italian Navy mission (Spain)", "location": "Spain", "period": "1936-1939",
+     "source": "Soler/Lopez-Brea/Weierud 2010 (Cryptologia 34:4)", "confidence": "sourced",
+     "notes": "wired with Dora (D); likely the whole A123x group shares it"},
+    {"serial": "A1238", "type": "commercial_unsteckered", "plugboard": false, "wiring": "D", "digits_on_rotors": false,
+     "holder": "Italian Navy mission (Spain)", "location": "Spain", "period": "1936-1939",
+     "source": "Soler 2010", "confidence": "sourced", "notes": ""},
+    {"serial": "A1250", "type": "commercial_unsteckered", "plugboard": false, "wiring": "D", "digits_on_rotors": false,
+     "holder": "Italian Navy mission (Spain)", "location": "Spain", "period": "1936-1939",
+     "source": "Soler 2010", "confidence": "sourced", "notes": ""},
+    {"serial": "A17316S", "type": "unknown", "plugboard": true, "wiring": "special", "digits_on_rotors": false,
+     "holder": "German Military Attache / Abwehr", "location": "Spain", "period": "SCW",
+     "source": "Soler 2010", "confidence": "sourced", "notes": "three-wheel Heeres-type, specially wired -- NOT the commercial family"},
+    {"serial": null, "type": "funkschluessel_M", "plugboard": true, "wiring": "M-service", "digits_on_rotors": false,
+     "holder": "Gruppe Nordsee / Kriegsschiff (Scheer?)", "location": "Spanish coast", "period": "spring 1937 ->",
+     "source": "TICOM T1022-2820 (folio 108-109)", "confidence": "sourced",
+     "notes": "one exemplar exchanged at a warship/Dv. Nord; to be returned to the Kriegsmarine after Uebung Hansa"},
+    {"serial": null, "type": "legion_condor_numbered", "plugboard": true, "wiring": "unknown", "digits_on_rotors": true,
+     "holder": "Legion Condor (used by Gruppe Nordsee)", "location": "Spain", "period": "SCW",
+     "source": "TICOM T1022-2820 (folio 109)", "confidence": "sourced",
+     "notes": "'same principle as Funkschluessel M but numbers on the rotors instead of letters'; returned per Legion Condor instructions"},
+    {"serial": null, "type": "commercial_unsteckered", "plugboard": false, "wiring": "D", "digits_on_rotors": false,
+     "holder": "Spanish & Italian services (via B.d.Sp. -> 'Partner')", "location": "Spain", "period": "SCW",
+     "source": "TICOM T1022-2820 (folio 109)", "confidence": "sourced",
+     "notes": "the 'Dora' machines of the return order; commercial unsteckered, wiring D"},
+    {"serial": null, "type": "commercial_unsteckered", "plugboard": false, "wiring": "F", "digits_on_rotors": false,
+     "holder": "Nationalist command (Salamanca <-> Baleares)", "location": "Salamanca / Baleares", "period": "Dec 1936",
+     "source": "Caja 745 / this project (XMOT, certified)", "confidence": "sourced",
+     "notes": "XMOT breaks with wiring F, order II-I-III, windows TXMO"},
+    {"serial": null, "type": "commercial_unsteckered", "plugboard": false, "wiring": "C", "digits_on_rotors": false,
+     "holder": "Nationalist naval (Baleares corridor)", "location": "Salamanca / Baleares", "period": "Dec 1936",
+     "source": "Caja 745 / this project (DHZB, LUIS)", "confidence": "inferred",
+     "notes": "does not break with D or F -> working hypothesis: Caesar (C), unpublished. RECOVERY TARGET."}
+  ],
+  "stations": [
+    {"name": "Bodenfunkstelle Pollensa", "role": "ground radio (air-sea rescue, He 59)", "location": "Mallorca", "source": "Rufnamen list (T1022-2820, folio 29/120)"},
+    {"name": "Bodenstelle Formentera", "role": "ground station", "location": "Formentera", "source": "Rufnamen list"},
+    {"name": "Bodenstelle / Funkstelle Cadiz", "role": "ground station; DEI relay (Uebermittlungsfunkstelle)", "location": "Cadiz", "source": "T1022-2820 (folio 24 & Rufnamen)"},
+    {"name": "Burgos", "role": "radio (200 W tx; U-boat sets)", "location": "Burgos", "source": "T1022-2820 (folio 118)"},
+    {"name": "Palma", "role": "radio (200 W tx Burgos-Palma)", "location": "Mallorca", "source": "T1022-2820 (folio 118)"},
+    {"name": "Vigo", "role": "radio (U-boat sets Cadiz-Vigo-Burgos)", "location": "Vigo", "source": "T1022-2820 (folio 118)"},
+    {"name": "Hilfskreuzer 'Ciudad de Valencia'", "role": "auxiliary cruiser with F.T. direction-finder", "location": "at sea", "source": "T1022-2820 (folio 118)"},
+    {"name": "Admiral Scheer (Scheer?)", "role": "warship in Funkschluessel M exchange", "location": "Spanish coast", "source": "T1022-2820 (folio 108, marked '?')"}
+  ],
+  "entities": {
+    "Dienststelle Sander": "German office (K.K. Wagner - Meyer Doehner) that set up the 3-language DEI signal procedure + Enigma, early 1937",
+    "B.d.Sp.": "German naval command in Spain (Befehlshaber der Spanien-gewaesser)",
+    "Partner": "codename for the Spanish naval service -- the intermediary that received the machines",
+    "Sonderstab W": "special staff W (clears value/return of the material)",
+    "Gruppe Nordsee": "German naval group that used M + Legion Condor Enigmas",
+    "Legion Condor": "German air/naval expeditionary force; first Enigmas came to Spain with it",
+    "DEI": "Deutschland-Espana-Italia -- the joint reconnaissance signal table / codebook (early 1937)"
+  },
+  "sources": [
+    {"ref": "T1022-2820", "desc": "German Seekriegsleitung file on Spanish-theatre radio/cipher material return (1937-1939); folios 24, 29/120, 108-109, 118 seen so far", "archive": "US NARA microfilm T1022 (German Navy records)"},
+    {"ref": "Soler 2010", "desc": "Soler Fuensanta, Lopez-Brea Espiau & Weierud, 'Spanish Enigma: A History of the Enigma in Spain', Cryptologia 34(4)", "archive": "TICOM T1715-T1718 (ChiMAG / H&R), Politisches Archiv des Auswaertigen Amts, Berlin"}
+  ]
+}

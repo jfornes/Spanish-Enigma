@@ -1,5 +1,6 @@
 {
   "_about": "Registry of Enigma machines and cipher stations in the Spanish theatre (Caja 745 context). Two INDEPENDENT axes: machine TYPE (chassis/family) and WIRING (rotor Schaltung, named by German phonetic alphabet). Fill in as archive material appears. Keep 'source' and 'confidence' on every row (data vs inference).",
+  "_letter_overloading_warning": "The letter is overloaded across two axes. MODEL names (Enigma B, C, D, K -- sequential commercial chassis; K is a version of model D) are DIFFERENT from WIRING names (C=Caesar, D=Dora, F=Friedrich -- rotor Schaltungen). Consequences: (1) the recovery target 'wiring C (Caesar)' is NOT the old 'Enigma C' model; it is a rotor wiring of the same commercial K/D family as D and F. (2) 'Dora' = wiring D, not the Enigma D model. Popular sources (Soler, 'Mensajes secretos': 'Cifra Naval D o Dora') name the naval SYSTEM by its wiring letter; the technical paper (Soler/Weierud 2010) pins 'Dora' to the wiring precisely. Both agree the Spanish/Italian machine was the commercial unsteckered K (a version of model D), settable reflector, carrying wiring D -- with F and C as sibling wirings in the same family.",
   "_schema": {
     "serial": "machine serial if known (e.g. A1236, A17316S); else null",
     "type": "one of: commercial_unsteckered | funkschluessel_M | legion_condor_numbered | unknown",

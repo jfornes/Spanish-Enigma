@@ -197,11 +197,10 @@ the accompanying paper. Machine-readable metadata is in
 [`CITATION.cff`](CITATION.cff).
 
 ```
-Fornés, J., & Rebull, A. (2026). Spanish-Enigma: A research toolkit for the
-cryptanalysis of Spanish Enigma K traffic. Zenodo.
-https://doi.org/10.5281/zenodo.XXXXXXX
+Fornés, J., & Rebull, A. (2026). Spanish-Enigma: A research toolkit for the cryptanalysis of Spanish Enigma K traffic (1936–1945) 
+Zenodo. https://doi.org/10.5281/zenodo.21208383. 
 ```
-*(DOI assigned on the first Zenodo release; update the value above accordingly.)*
+
 
 ## Contributing
 

@@ -1,4 +1,5 @@
 # Spanish-Enigma
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21208384.svg)](https://doi.org/10.5281/zenodo.21208384)
 
 A research toolkit for the cryptanalysis of Spanish Enigma K traffic
 (1936–1945), accompanying the work *Uns pocs republicans espanyols a

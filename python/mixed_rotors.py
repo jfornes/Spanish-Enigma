@@ -38,7 +38,9 @@ def _ioc(dec):
 
 def load_cribs(arg):
     """Return a list of cribs. arg is a literal crib, unless it names an existing
-    file, in which case each non-comment line is a crib."""
+    file, in which case each non-comment line is a crib. If arg LOOKS like a path
+    (has a separator or a .txt/.lst extension) but does not exist, fail loudly --
+    do not silently turn a mistyped filename into a phantom crib."""
     if os.path.isfile(arg):
         out = []
         for line in open(arg, encoding="utf-8"):
@@ -46,7 +48,12 @@ def load_cribs(arg):
             s = "".join(ch for ch in s if ch in A)
             if s:
                 out.append(s)
+        print(f"[read {len(out)} crib(s) from {arg}]")
         return out
+    looks_like_path = ("/" in arg) or ("\\" in arg) or arg.lower().endswith((".txt", ".lst", ".cribs"))
+    if looks_like_path:
+        sys.exit(f"ERROR: '{arg}' looks like a file but does not exist (cwd: {os.getcwd()}). "
+                 f"Check the path, or pass a literal crib without a / or .txt.")
     return ["".join(ch for ch in arg.upper() if ch in A)]
 
 

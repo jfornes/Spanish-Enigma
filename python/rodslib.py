@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+#!/usr/bin/env python3
 """rodslib.py -- locate and load the compiled Enigma K search library (librods).
 
 Single loader shared by corpus_sweep.py, rods_frontend.py and buttonup.py. It
@@ -61,20 +62,26 @@ def library_path():
 
 
 def load():
-    """Load librods and configure argtypes for every exported kernel. Cached, so
-    the shared object is opened once per process even across the three front-ends."""
+    """Load librods and configure argtypes for every kernel the shared object
+    actually exports. Cached (opened once per process). Missing kernels are skipped
+    rather than fatal, so a front-end that needs only some of them still works with
+    an older/partial librods.so; a kernel that is genuinely absent fails clearly only
+    when a caller invokes it. lib.kernels lists what was found."""
     global _lib
     if _lib is not None:
         return _lib
     lib = ctypes.CDLL(library_path())
     P = ctypes.POINTER(ctypes.c_int); ci = ctypes.c_int
-    # rod_search / coupling_search / coupling_link_search share one signature
-    sig = [P, P, P, P, P, ci, P, ci, ci, P, ci, ci, P, ci]
-    for name in ('rod_search', 'coupling_search', 'coupling_link_search'):
-        fn = getattr(lib, name); fn.argtypes = sig; fn.restype = ci
-    lib.rod_search_sweep.argtypes = [P, P, P, P, P, ci, P, ci, ci, ci, P, ci, ci, P, ci]
-    lib.rod_search_sweep.restype = ci
-    lib.buttonup_anchor.argtypes = [P, P, P, P, ci, ci, P, ci, ci, ci, ci, P, ci]
-    lib.buttonup_anchor.restype = ci
+    sig = [P, P, P, P, P, ci, P, ci, ci, P, ci, ci, P, ci]      # rod_search / coupling / link
+    specs = {
+        'rod_search': sig, 'coupling_search': sig, 'coupling_link_search': sig,
+        'rod_search_sweep': [P, P, P, P, P, ci, P, ci, ci, ci, P, ci, ci, P, ci],
+        'buttonup_anchor':  [P, P, P, P, ci, ci, P, ci, ci, ci, ci, P, ci],
+    }
+    lib.kernels = []
+    for name, at in specs.items():
+        fn = getattr(lib, name, None)                          # absent symbol -> None, not fatal
+        if fn is not None:
+            fn.argtypes = at; fn.restype = ci; lib.kernels.append(name)
     _lib = lib
     return lib

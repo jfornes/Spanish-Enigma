@@ -13,7 +13,7 @@ the rotor NUMBER (Y/E/N for I/II/III), identical for D and F, so a mix is well d
 
 Judge by IoC (Spanish ~0.075, random ~0.045), NOT by match count: a short crib is
 reproduced by hundreds of settings purely by chance. Cribs under 12 letters are
-skipped. A summary ranked by IoC is printed at the end -- ideal for an overnight
+skipped (default 8, see --min-crib). A summary ranked by IoC is printed at the end -- ideal for an overnight
 sweep of a crib catalogue (redirect stdout to a log file).
 
 Usage:
@@ -25,7 +25,7 @@ from collections import Counter
 import corpus_sweep as cs
 c2n = cs.c2n; A = cs.A
 
-MIN_CRIB = 12          # shorter cribs only yield chance coincidences -> skipped
+MIN_CRIB = 8           # default min crib length; >=8 is spurious-free. Override with --min-crib
 SPANISH  = 0.060       # flag hint; a clean break is higher, a garbled real break ~0.055-0.060
 
 
@@ -57,7 +57,7 @@ def load_cribs(arg):
     return ["".join(ch for ch in arg.upper() if ch in A)]
 
 
-def run(path, cribs, procs=4, all_arr=True, mix=False):
+def run(path, cribs, procs=4, all_arr=True, mix=False, min_crib=MIN_CRIB):
     data = json.load(open(path, encoding="utf-8")); m = data[0] if isinstance(data, list) else data
     grund = m.get("grundstellung"); body, plains = cs.parse_body(m)
     ct = [c2n[c] for c in body]
@@ -73,8 +73,8 @@ def run(path, cribs, procs=4, all_arr=True, mix=False):
     results = []                                                   # (io, crib, label, cfg, decode)
     for crib in cribs:
         cb = [c2n[c] for c in crib]
-        if len(cb) < MIN_CRIB:
-            print(f"[skip crib '{crib}' -- {len(cb)}<{MIN_CRIB} letters, would only yield noise]"); continue
+        if len(cb) < min_crib:
+            print(f"[skip crib '{crib}' -- {len(cb)}<{min_crib} letters; lower with --min-crib if you accept noise]"); continue
         print(f"crib '{crib}' ({len(cb)}):")
         for combo in combos:
             cs.WIRINGS['_MIX'] = {'I': sets[combo[0]]['I'], 'II': sets[combo[1]]['II'], 'III': sets[combo[2]]['III']}
@@ -126,5 +126,7 @@ if __name__ == "__main__":
     ap.add_argument("--mix", action="store_true", help="also try the 6 mixed rotor combos")
     ap.add_argument("--arr", choices=["all", "canonical"], default="all")
     ap.add_argument("--procs", type=int, default=4)
+    ap.add_argument("--min-crib", type=int, default=MIN_CRIB,
+                    help=f"skip cribs shorter than this (default {MIN_CRIB}; >=8 is spurious-free)")
     a = ap.parse_args()
-    run(a.message, load_cribs(a.crib), a.procs, all_arr=(a.arr == "all"), mix=a.mix)
+    run(a.message, load_cribs(a.crib), a.procs, all_arr=(a.arr == "all"), mix=a.mix, min_crib=a.min_crib)

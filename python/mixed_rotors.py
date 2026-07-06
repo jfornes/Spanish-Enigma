@@ -26,7 +26,7 @@ import corpus_sweep as cs
 c2n = cs.c2n; A = cs.A
 
 MIN_CRIB = 8           # default min crib length; >=8 is spurious-free. Override with --min-crib
-SPANISH  = 0.060       # flag hint; a clean break is higher, a garbled real break ~0.055-0.060
+FRAG_RATIO = 0.12      # frag-score per letter above this = real Spanish (XMOT break ~0.24; degeneracy <0.08)
 
 
 def _ioc(dec):
@@ -34,6 +34,13 @@ def _ioc(dec):
     if N < 2:
         return 0.0
     c = Counter(s); return sum(v * (v - 1) for v in c.values()) / (N * (N - 1))
+
+
+def _spanish(fs, n):
+    """Flag on frag-score PER LETTER, not IoC: real Spanish shows many Spanish
+    fragments, while a degenerate decode (one dominant letter) can have high IoC
+    but almost no fragments -- exactly the DHZB false positives."""
+    return n > 0 and fs / n >= FRAG_RATIO
 
 
 def load_cribs(arg):
@@ -88,35 +95,35 @@ def run(path, cribs, procs=4, all_arr=True, mix=False, min_crib=MIN_CRIB):
                 uwin = c2n[grund[miss]]; windows = tuple(c2n[grund[i]] for i in triple)
                 rings = ((uwin - u) % 26, rL, rM, rR)
                 dec = cs.decode_all('_MIX', cs.ORDERS[oi], windows, uwin, rings, ct)
-                io = _ioc(dec)
-                if best is None or io > best[0]:
+                io = _ioc(dec); fs = cs.fscore(dec)
+                if best is None or fs > best[0]:
                     cfg = (f"order {'-'.join(cs.ORDERS[oi])}  win(U,L,M,R)={A[uwin] + ''.join(A[w] for w in windows)}"
                            f"  rings={''.join(A[r] for r in rings)}")
-                    best = (io, cfg, dec)
-            io, cfg, dec = best
-            flag = "  <== SPANISH-LIKE" if io >= SPANISH else ""
-            print(f"    [{label}]  {len(hits)} matches  IoC={io:.4f}{flag}")
-            results.append((io, crib, label, cfg, dec))
+                    best = (fs, io, cfg, dec)
+            fs, io, cfg, dec = best
+            flag = "  <== SPANISH-LIKE" if _spanish(fs, len(dec)) else ""
+            print(f"    [{label}]  {len(hits)} matches  frag={fs} IoC={io:.4f}{flag}")
+            results.append((fs, io, crib, label, cfg, dec))
     cs.WIRINGS.pop('_MIX', None)
     print("\n" + "=" * 64)
-    print("BEST OF THE RUN  (ranked by IoC; Spanish ~0.075, random ~0.045)")
+    print("BEST OF THE RUN  (ranked by frag-score/letter; real Spanish ~0.24, noise <0.08)")
     print("=" * 64)
     if not results:
         print("no combo reproduced any crib."); return
-    results.sort(reverse=True)
-    for io, crib, label, cfg, dec in results[:12]:
-        flag = "  <== SPANISH-LIKE (real candidate)" if io >= SPANISH else ""
-        print(f"  IoC={io:.4f}  crib '{crib}'  [{label}]{flag}")
+    results.sort(reverse=True)                                     # (fs, io, ...) -> frag first
+    for fs, io, crib, label, cfg, dec in results[:12]:
+        flag = "  <== SPANISH-LIKE (real candidate)" if _spanish(fs, len(dec)) else ""
+        print(f"  frag={fs} IoC={io:.4f}  crib '{crib}'  [{label}]{flag}")
         print(f"      {cfg}")
         print(f"      {dec}")
-    top = results[0][0]
+    tfs, tdec = results[0][0], results[0][5]
     print()
-    if top >= SPANISH:
-        print("=> POSSIBLE BREAK: the top line looks Spanish-like. READ IT to confirm real words.")
+    if _spanish(tfs, len(tdec)):
+        print("=> POSSIBLE BREAK: the top line has real Spanish fragments. READ it to confirm.")
     else:
-        print(f"=> Best IoC {top:.4f}, below the flag ({SPANISH}). Probably no break with these")
-        print(f"   {'mixed' if mix else 'pure'} D/F rotors -- but SCAN the top decodes above anyway: a heavily")
-        print(f"   garbled real break can sit near 0.055-0.060; a clean one would be clearly higher.")
+        print(f"=> Nothing broke: best frag-score {tfs} (~{tfs/max(len(tdec),1):.3f}/letter) is degeneracy/")
+        print(f"   noise, NOT Spanish (a real break scores ~0.24/letter -- e.g. XMOT gives 32).")
+        print(f"   {'Mixed' if mix else 'Pure'} D/F rotors do not decode this message.")
 
 
 def _ioc_init(defs):
@@ -183,31 +190,31 @@ def ioc_run(path, procs=4, all_arr=True, mix=False, topk=3):
         allres = [r for sub in pool.map(_ioc_full_worker, tasks) for r in sub]
     best = {}
     for io, fs, w, order, rings, txt in allres:
-        if w not in best or io > best[w][0]:
+        if w not in best or fs > best[w][1]:
             best[w] = (io, fs, order, rings, txt)
     for n, c in names:
         if n in best:
             io, fs, order, rings, txt = best[n]
-            flag = "  <== SPANISH-LIKE" if io >= SPANISH else ""
-            print(f"  [{label[n]}]  best IoC={io:.4f}  frag={fs}{flag}")
+            flag = "  <== SPANISH-LIKE" if _spanish(fs, len(txt)) else ""
+            print(f"  [{label[n]}]  best frag={fs}  IoC={io:.4f}{flag}")
     print("\n" + "=" * 64)
-    print("BEST OF THE RUN  (IoC-blind; Spanish ~0.075, random ~0.045)")
+    print("BEST OF THE RUN  (IoC-blind; ranked by frag-score/letter, real Spanish ~0.24)")
     print("=" * 64)
-    allres.sort(key=lambda z: z[0], reverse=True)
+    allres.sort(key=lambda z: (z[1], z[0]), reverse=True)         # frag first, IoC tiebreak
     for io, fs, w, order, rings, txt in allres[:10]:
-        flag = "  <== SPANISH-LIKE (real candidate)" if io >= SPANISH else ""
-        print(f"  IoC={io:.4f} frag={fs}  [{label.get(w, w)}]  order {order}  "
+        flag = "  <== SPANISH-LIKE (real candidate)" if _spanish(fs, len(txt)) else ""
+        print(f"  frag={fs} IoC={io:.4f}  [{label.get(w, w)}]  order {order}  "
               f"rings(U,L,M,R)={''.join(A[r] for r in rings)}{flag}")
         print(f"      {txt}")
     for n, _ in names:
         cs.WIRINGS.pop(n, None)
-    top = allres[0][0] if allres else 0.0
+    tfs = allres[0][1] if allres else 0; tn = len(allres[0][5]) if allres else 1
     print()
-    if top >= SPANISH:
-        print("=> POSSIBLE BREAK: the top line is Spanish-like. READ it, then confirm with --crib to pin the key.")
+    if _spanish(tfs, tn):
+        print("=> POSSIBLE BREAK: the top line has real Spanish fragments. READ it, then --crib to pin the key.")
     else:
-        print(f"=> Nothing broke: best IoC {top:.4f} is noise-level -- no {'mixed ' if mix else ''}D/F setting")
-        print(f"   decodes this message into Spanish. Consistent with a third wiring (Caesar/C).")
+        print(f"=> Nothing broke: best frag-score {tfs} (~{tfs/max(tn,1):.3f}/letter) is degeneracy/noise, not")
+        print(f"   Spanish. No {'mixed ' if mix else ''}D/F setting decodes this message -> consistent with wiring C.")
 
 
 if __name__ == "__main__":

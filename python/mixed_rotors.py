@@ -119,14 +119,109 @@ def run(path, cribs, procs=4, all_arr=True, mix=False, min_crib=MIN_CRIB):
         print(f"   garbled real break can sit near 0.055-0.060; a clean one would be clearly higher.")
 
 
+def _ioc_init(defs):
+    """Pool initializer: inject the mixed wiring sets into each worker process
+    (needed because macOS 'spawn' re-imports corpus_sweep fresh, without them)."""
+    import corpus_sweep as _cs
+    _cs.WIRINGS.update(defs)
+
+
+def _ioc_full_worker(task):
+    """Score every full decode by IoC over the FULL 26^4 ring space (UKW ring
+    INCLUDED). corpus_sweep.ioc_worker fixes the UKW ring on a false gauge argument
+    and thereby misses any key whose UKW ring != 0 (it misses XMOT); this sweeps it."""
+    import numpy as np
+    wiring, order, windows, uwin, ct_list, topk = task
+    ct = np.array(ct_list); N = len(ct)
+    W = {k: cs.perm(cs.WIRINGS[wiring][k]) for k in ('I', 'II', 'III')}
+    lf, lr = W[order[0]]; mf, mr = W[order[1]]; rf, rr = W[order[2]]
+    seq = cs.posseq(order, windows, N)
+    g = np.arange(26)
+    RU, RL, RM, RR = (z.ravel() for z in np.meshgrid(g, g, g, g, indexing='ij'))   # full 26^4
+    V = RU.size
+    ETWR = cs.ETWR; ETWF = cs.ETWF; UKWF = cs.UKWF; A = cs.A
+    out = np.empty((V, N), np.int8)
+    for t in range(N):
+        L, M, R = seq[t]; oL = (L - RL) % 26; oM = (M - RM) % 26; oR = (R - RR) % 26; u = (uwin - RU) % 26
+        x = ETWR[int(ct[t])]
+        x = (rf[(x + oR) % 26] - oR) % 26; x = (mf[(x + oM) % 26] - oM) % 26; x = (lf[(x + oL) % 26] - oL) % 26
+        x = (UKWF[(x + u) % 26] - u) % 26
+        x = (lr[(x + oL) % 26] - oL) % 26; x = (mr[(x + oM) % 26] - oM) % 26; x = (rr[(x + oR) % 26] - oR) % 26
+        out[:, t] = ETWF[x]
+    cnt = np.zeros((V, 26), np.int32)
+    for k in range(26):
+        cnt[:, k] = (out == k).sum(1)
+    io = (cnt * (cnt - 1)).sum(1) / (N * (N - 1))
+    idx = np.argpartition(io, -40)[-40:]; res = []
+    for i in idx:
+        txt = ''.join(A[v] for v in out[i])
+        res.append((float(io[i]), cs.fscore(txt), wiring, '-'.join(order),
+                    (int(RU[i]), int(RL[i]), int(RM[i]), int(RR[i])), txt))
+    res.sort(key=lambda z: (z[1], z[0]), reverse=True); return res[:topk]
+
+
+def ioc_run(path, procs=4, all_arr=True, mix=False, topk=3):
+    """IoC-blind mode (no crib): for each rotor-set combo, sweep arrangements /
+    orders / the FULL 26^4 rings and score each full decode by IoC. Finds ANY setting
+    that yields Spanish, without assuming known plaintext. Judge by IoC (Spanish
+    ~0.075, random ~0.045)."""
+    import multiprocessing as mp
+    data = json.load(open(path, encoding="utf-8")); m = data[0] if isinstance(data, list) else data
+    grund = m.get("grundstellung"); body, plains = cs.parse_body(m); ct = [c2n[c] for c in body]
+    combos = list(itertools.product("DF", repeat=3)) if mix else [('D', 'D', 'D'), ('F', 'F', 'F')]
+    sets = {'D': cs.WIRINGS['D'], 'F': cs.WIRINGS['F']}
+    mixdefs = {}; names = []
+    for i, combo in enumerate(combos):
+        n = f"_MIX{i}"; names.append((n, combo))
+        mixdefs[n] = {'I': sets[combo[0]]['I'], 'II': sets[combo[1]]['II'], 'III': sets[combo[2]]['III']}
+    label = {n: f"I<-{c[0]} II<-{c[1]} III<-{c[2]}" for n, c in names}
+    tasks = cs.build_tasks(ct, grund, all_arr, [n for n, _ in names], (topk,))
+    print(f"message G={grund}  n={len(body)}  arrangements={'all' if all_arr else 'canonical'}  "
+          f"combos={'8 (pure+mixed)' if mix else '2 (pure D,F)'}  IoC-blind (no crib)  "
+          f"-- {len(tasks)} tasks x 26^4 rings\n")
+    with mp.Pool(procs, initializer=_ioc_init, initargs=(mixdefs,)) as pool:
+        allres = [r for sub in pool.map(_ioc_full_worker, tasks) for r in sub]
+    best = {}
+    for io, fs, w, order, rings, txt in allres:
+        if w not in best or io > best[w][0]:
+            best[w] = (io, fs, order, rings, txt)
+    for n, c in names:
+        if n in best:
+            io, fs, order, rings, txt = best[n]
+            flag = "  <== SPANISH-LIKE" if io >= SPANISH else ""
+            print(f"  [{label[n]}]  best IoC={io:.4f}  frag={fs}{flag}")
+    print("\n" + "=" * 64)
+    print("BEST OF THE RUN  (IoC-blind; Spanish ~0.075, random ~0.045)")
+    print("=" * 64)
+    allres.sort(key=lambda z: z[0], reverse=True)
+    for io, fs, w, order, rings, txt in allres[:10]:
+        flag = "  <== SPANISH-LIKE (real candidate)" if io >= SPANISH else ""
+        print(f"  IoC={io:.4f} frag={fs}  [{label.get(w, w)}]  order {order}  "
+              f"rings(U,L,M,R)={''.join(A[r] for r in rings)}{flag}")
+        print(f"      {txt}")
+    for n, _ in names:
+        cs.WIRINGS.pop(n, None)
+    top = allres[0][0] if allres else 0.0
+    print()
+    if top >= SPANISH:
+        print("=> POSSIBLE BREAK: the top line is Spanish-like. READ it, then confirm with --crib to pin the key.")
+    else:
+        print(f"=> Nothing broke: best IoC {top:.4f} is noise-level -- no {'mixed ' if mix else ''}D/F setting")
+        print(f"   decodes this message into Spanish. Consistent with a third wiring (Caesar/C).")
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("message")
-    ap.add_argument("--crib", required=True, help="a literal crib, or a file of cribs (one per line)")
+    ap.add_argument("--crib", help="a literal crib, or a file of cribs (one per line). OMIT for IoC-blind mode.")
     ap.add_argument("--mix", action="store_true", help="also try the 6 mixed rotor combos")
     ap.add_argument("--arr", choices=["all", "canonical"], default="all")
     ap.add_argument("--procs", type=int, default=4)
     ap.add_argument("--min-crib", type=int, default=MIN_CRIB,
                     help=f"skip cribs shorter than this (default {MIN_CRIB}; >=8 is spurious-free)")
+    ap.add_argument("--top", type=int, default=3, help="IoC-blind mode: keep this many settings per task")
     a = ap.parse_args()
-    run(a.message, load_cribs(a.crib), a.procs, all_arr=(a.arr == "all"), mix=a.mix, min_crib=a.min_crib)
+    if a.crib:
+        run(a.message, load_cribs(a.crib), a.procs, all_arr=(a.arr == "all"), mix=a.mix, min_crib=a.min_crib)
+    else:
+        ioc_run(a.message, a.procs, all_arr=(a.arr == "all"), mix=a.mix, topk=a.top)

@@ -43,6 +43,18 @@ def _spanish(fs, n):
     return n > 0 and fs / n >= FRAG_RATIO
 
 
+LONGWORDS = ("MOVIMIENTO", "BARCOS", "PRECAUCION", "TELEGRAMA", "COMANDANTE", "SITUACION",
+             "GENERALISIMO", "SUBMARINO", "DESEMBARCO", "BALEARES", "MALLORCA", "FORMENTERA",
+             "CARTAGENA", "BARCELONA", "ACORAZADO", "DESTRUCTOR", "LONGITUD", "PRECAUCIONES",
+             "NUESTRO", "REFIERO", "COMUNICO", "HONOR")
+def _has_word(txt):
+    """Robust break signal, immune to extreme-value inflation: over ~500M ring
+    decodes the best FAKES high IoC/frag by chance (scattered EL/DE/LA), but an 8+
+    letter dictionary word essentially never occurs at random. Real breaks contain
+    connected words; noise does not."""
+    return next((w for w in LONGWORDS if w in txt), None)
+
+
 def load_cribs(arg):
     """Return a list of cribs. arg is a literal crib, unless it names an existing
     file, in which case each non-comment line is a crib. If arg LOOKS like a path
@@ -66,7 +78,10 @@ def load_cribs(arg):
 
 def run(path, cribs, procs=4, all_arr=True, mix=False, min_crib=MIN_CRIB):
     data = json.load(open(path, encoding="utf-8")); m = data[0] if isinstance(data, list) else data
-    grund = m.get("grundstellung"); body, plains = cs.parse_body(m)
+    grund = m.get("grundstellung")
+    if not grund or len(grund) != 4:
+        print(f"ERROR: {path} has no 4-letter Grundstellung (got {grund!r}); cannot search."); return
+    body, plains = cs.parse_body(m)
     ct = [c2n[c] for c in body]
     arrlist = ([(p, q, r) for p in range(4) for q in range(4) for r in range(4) if len({p, q, r}) == 3]
                if all_arr else [(0, 1, 2)])
@@ -174,7 +189,10 @@ def ioc_run(path, procs=4, all_arr=True, mix=False, topk=3):
     ~0.075, random ~0.045)."""
     import multiprocessing as mp
     data = json.load(open(path, encoding="utf-8")); m = data[0] if isinstance(data, list) else data
-    grund = m.get("grundstellung"); body, plains = cs.parse_body(m); ct = [c2n[c] for c in body]
+    grund = m.get("grundstellung")
+    if not grund or len(grund) != 4:
+        print(f"ERROR: {path} has no 4-letter Grundstellung (got {grund!r}); cannot search."); return
+    body, plains = cs.parse_body(m); ct = [c2n[c] for c in body]
     combos = list(itertools.product("DF", repeat=3)) if mix else [('D', 'D', 'D'), ('F', 'F', 'F')]
     sets = {'D': cs.WIRINGS['D'], 'F': cs.WIRINGS['F']}
     mixdefs = {}; names = []
@@ -195,26 +213,29 @@ def ioc_run(path, procs=4, all_arr=True, mix=False, topk=3):
     for n, c in names:
         if n in best:
             io, fs, order, rings, txt = best[n]
-            flag = "  <== SPANISH-LIKE" if _spanish(fs, len(txt)) else ""
-            print(f"  [{label[n]}]  best frag={fs}  IoC={io:.4f}{flag}")
+            w2 = _has_word(txt)
+            print(f"  [{label[n]}]  best frag={fs}  IoC={io:.4f}" + (f"  <== has '{w2}'" if w2 else ""))
     print("\n" + "=" * 64)
     print("BEST OF THE RUN  (IoC-blind; ranked by frag-score/letter, real Spanish ~0.24)")
     print("=" * 64)
     allres.sort(key=lambda z: (z[1], z[0]), reverse=True)         # frag first, IoC tiebreak
     for io, fs, w, order, rings, txt in allres[:10]:
-        flag = "  <== SPANISH-LIKE (real candidate)" if _spanish(fs, len(txt)) else ""
+        wd = _has_word(txt)
         print(f"  frag={fs} IoC={io:.4f}  [{label.get(w, w)}]  order {order}  "
-              f"rings(U,L,M,R)={''.join(A[r] for r in rings)}{flag}")
+              f"rings(U,L,M,R)={''.join(A[r] for r in rings)}" + (f"  <== CONTAINS '{wd}'" if wd else ""))
         print(f"      {txt}")
     for n, _ in names:
         cs.WIRINGS.pop(n, None)
-    tfs = allres[0][1] if allres else 0; tn = len(allres[0][5]) if allres else 1
+    hit = next(((z[5], _has_word(z[5])) for z in allres[:50] if _has_word(z[5])), None)
     print()
-    if _spanish(tfs, tn):
-        print("=> POSSIBLE BREAK: the top line has real Spanish fragments. READ it, then --crib to pin the key.")
+    if hit:
+        print(f"=> CANDIDATE: a top decode contains the real word '{hit[1]}'. READ it and confirm with --crib.")
     else:
-        print(f"=> Nothing broke: best frag-score {tfs} (~{tfs/max(tn,1):.3f}/letter) is degeneracy/noise, not")
-        print(f"   Spanish. No {'mixed ' if mix else ''}D/F setting decodes this message -> consistent with wiring C.")
+        tfs = allres[0][1] if allres else 0; tn = len(allres[0][5]) if allres else 1
+        print(f"=> Nothing broke. The best frag-scores (~{tfs/max(tn,1):.2f}/letter) are EXTREME-VALUE noise:")
+        print(f"   over {len(tasks)} tasks x 26^4 the best random decode fakes frag ~0.2 with scattered EL/DE/LA,")
+        print(f"   but contains NO connected words (a real break shows e.g. MOVIMIENTOBARCOS). No")
+        print(f"   {'mixed ' if mix else ''}D/F setting decodes this message -> consistent with wiring C (Caesar).")
 
 
 if __name__ == "__main__":

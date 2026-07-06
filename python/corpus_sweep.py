@@ -1,22 +1,4 @@
 #!/usr/bin/env python3
-
-# Spanish-Enigma: A research toolkit for the cryptanalysis of Spanish
-# Enigma K traffic (1936-1945)
-# Copyright (C) 2026  Jordi Fornés, Alba Rebull
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 """
 corpus_sweep.py -- Caja 745 sweep with the CORRECTED-ETW Enigma K engine.
 
@@ -118,10 +100,10 @@ def ioc_worker(task):
     wiring, order, windows, uwin, ct_list, topk = task
     ct=np.array(ct_list); N=len(ct); W={k:perm(WIRINGS[wiring][k]) for k in('I','II','III')}
     lf,lr=W[order[0]]; mf,mr=W[order[1]]; rf,rr=W[order[2]]; seq=posseq(order,windows,N)
-    g=np.arange(26); RL,RM,RR=(z.ravel() for z in np.meshgrid(g,g,g,indexing='ij')); V=RL.size
-    out=np.empty((V,N),np.int8); u=uwin    # UKW ring fixed (gauge-equiv. to left ring while left rotor static); use --crib for full 26^4
+    g=np.arange(26); RU,RL,RM,RR=(z.ravel() for z in np.meshgrid(g,g,g,g,indexing='ij')); V=RU.size
+    out=np.empty((V,N),np.int8)    # full 26^4: the UKW ring is swept too. Fixing it at 0 (old code) missed LUIS.
     for t in range(N):
-        L,M,R=seq[t]; oL=(L-RL)%26; oM=(M-RM)%26; oR=(R-RR)%26
+        L,M,R=seq[t]; oL=(L-RL)%26; oM=(M-RM)%26; oR=(R-RR)%26; u=(uwin-RU)%26
         x=ETWR[int(ct[t])]
         x=(rf[(x+oR)%26]-oR)%26; x=(mf[(x+oM)%26]-oM)%26; x=(lf[(x+oL)%26]-oL)%26
         x=(UKWF[(x+u)%26]-u)%26
@@ -133,7 +115,7 @@ def ioc_worker(task):
     for i in idx:
         txt=''.join(A[v] for v in out[i])
         res.append((float(io[i]),fscore(txt),wiring,'-'.join(order),
-                    (0,int(RL[i]),int(RM[i]),int(RR[i])),txt))
+                    (int(RU[i]),int(RL[i]),int(RM[i]),int(RR[i])),txt))
     res.sort(key=lambda z:(z[1],z[0]),reverse=True); return res[:topk]
 
 # ---- crib mode worker ----

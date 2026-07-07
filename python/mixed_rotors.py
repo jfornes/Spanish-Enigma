@@ -55,6 +55,41 @@ def _has_word(txt):
     return next((w for w in LONGWORDS if w in txt), None)
 
 
+CWORDS = LONGWORDS + ("CONSECUENCIA", "DESEMBARCO", "ENEMIGO", "INTENTASE", "ALGUNA", "ACCION",
+                      "PORSIENE", "SOBRE", "OIBIZA", "IBIZA", "MOVIMIENTOBARCOS", "TOMEPRECAUCIONES",
+                      "CUATRO", "SIETE", "OCHO", "PROSEGUIR", "HORAS", "FECHA", "ORDENADA", "AERONAVAL",
+                      "CACAREADO", "MALLORCAOIBIZA")
+def _consensus(decodes):
+    """Merge several partial decodes of one message into a consensus reading. The
+    garble is turnover-adjacent and moves with the key, so different keys read
+    different regions cleanly; per position we take the letter that falls inside a
+    recognised Spanish word (else the majority). Returns (text, confident[]) where
+    confident marks agreed/word-backed positions (shown UPPER; uncertain lower)."""
+    ds = list(dict.fromkeys(d for d in decodes if d))
+    if not ds:
+        return "", []
+    n = len(ds[0]); ds = [d for d in ds if len(d) == n]
+    masks = []
+    for d in ds:
+        m = [False] * n
+        for w in CWORDS:
+            i = d.find(w)
+            while i != -1:
+                for j in range(i, i + len(w)):
+                    m[j] = True
+                i = d.find(w, i + 1)
+        masks.append(m)
+    out = []; conf = []
+    for p in range(n):
+        cov = [k for k in range(len(ds)) if masks[k][p]]
+        if cov:
+            c = Counter(ds[k][p] for k in cov); out.append(c.most_common(1)[0][0]); conf.append(True)
+        else:
+            c = Counter(d[p] for d in ds); ltr, ct = c.most_common(1)[0]
+            out.append(ltr if ct > 1 else ltr.lower()); conf.append(ct > 1)
+    return ''.join(out), conf
+
+
 def load_cribs(arg):
     """Return a list of cribs. arg is a literal crib, unless it names an existing
     file, in which case each non-comment line is a crib. If arg LOOKS like a path
@@ -182,7 +217,7 @@ def _ioc_full_worker(task):
     res.sort(key=lambda z: (z[1], z[0]), reverse=True); return res[:topk]
 
 
-def ioc_run(path, procs=4, all_arr=True, mix=False, topk=3):
+def ioc_run(path, procs=4, all_arr=True, mix=False, topk=3, consensus=False):
     """IoC-blind mode (no crib): for each rotor-set combo, sweep arrangements /
     orders / the FULL 26^4 rings and score each full decode by IoC. Finds ANY setting
     that yields Spanish, without assuming known plaintext. Judge by IoC (Spanish
@@ -226,6 +261,19 @@ def ioc_run(path, procs=4, all_arr=True, mix=False, topk=3):
         print(f"      {txt}")
     for n, _ in names:
         cs.WIRINGS.pop(n, None)
+    if consensus:
+        distinct = []
+        for _io, _fs, _w, _o, _r, txt in allres:
+            if txt not in distinct:
+                distinct.append(txt)
+            if len(distinct) >= 20:
+                break
+        merged, cf = _consensus(distinct)
+        print("\n" + "=" * 64)
+        print(f"CONSENSUS over {len(distinct)} distinct decodes (UPPER=confident, lower=uncertain)")
+        print("=" * 64)
+        print("   ", merged)
+        print(f"    confident positions: {sum(cf)}/{len(cf)}")
     hit = next(((z[5], _has_word(z[5])) for z in allres[:50] if _has_word(z[5])), None)
     print()
     if hit:
@@ -248,8 +296,9 @@ if __name__ == "__main__":
     ap.add_argument("--min-crib", type=int, default=MIN_CRIB,
                     help=f"skip cribs shorter than this (default {MIN_CRIB}; >=8 is spurious-free)")
     ap.add_argument("--top", type=int, default=3, help="IoC-blind mode: keep this many settings per task")
+    ap.add_argument("--consensus", action="store_true", help="IoC-blind: merge the top decodes into a consensus reading")
     a = ap.parse_args()
     if a.crib:
         run(a.message, load_cribs(a.crib), a.procs, all_arr=(a.arr == "all"), mix=a.mix, min_crib=a.min_crib)
     else:
-        ioc_run(a.message, a.procs, all_arr=(a.arr == "all"), mix=a.mix, topk=a.top)
+        ioc_run(a.message, a.procs, all_arr=(a.arr == "all"), mix=a.mix, topk=a.top, consensus=a.consensus)

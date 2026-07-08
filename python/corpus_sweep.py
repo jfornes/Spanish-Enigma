@@ -117,23 +117,26 @@ def decode_all(wiring, order, windows, uwin, rings, ct):
 def ioc_worker(task):
     wiring, order, windows, uwin, ct_list, topk = task
     ct=np.array(ct_list); N=len(ct); W={k:perm(WIRINGS[wiring][k]) for k in('I','II','III')}
-    lf,lr=W[order[0]]; mf,mr=W[order[1]]; rf,rr=W[order[2]]; seq=posseq(order,windows,N)
-    g=np.arange(26); RU,RL,RM,RR=(z.ravel() for z in np.meshgrid(g,g,g,g,indexing='ij')); V=RU.size
-    out=np.empty((V,N),np.int8)    # full 26^4: the UKW ring is swept too. Fixing it at 0 (old code) missed LUIS.
-    for t in range(N):
-        L,M,R=seq[t]; oL=(L-RL)%26; oM=(M-RM)%26; oR=(R-RR)%26; u=(uwin-RU)%26
-        x=ETWR[int(ct[t])]
-        x=(rf[(x+oR)%26]-oR)%26; x=(mf[(x+oM)%26]-oM)%26; x=(lf[(x+oL)%26]-oL)%26
-        x=(UKWF[(x+u)%26]-u)%26
-        x=(lr[(x+oL)%26]-oL)%26; x=(mr[(x+oM)%26]-oM)%26; x=(rr[(x+oR)%26]-oR)%26
-        out[:,t]=ETWF[x]
-    cnt=np.zeros((V,26),np.int32)
-    for k in range(26): cnt[:,k]=(out==k).sum(1)
-    io=(cnt*(cnt-1)).sum(1)/(N*(N-1)); idx=np.argpartition(io,-40)[-40:]; res=[]
-    for i in idx:
-        txt=''.join(A[v] for v in out[i])
-        res.append((float(io[i]),fscore(txt),wiring,'-'.join(order),
-                    (int(RU[i]),int(RL[i]),int(RM[i]),int(RR[i])),txt))
+    lf,lr=W[order[0]]; mf,mr=W[order[1]]; rf,rr=W[order[2]]
+    g=np.arange(26); RU,RL,RM=(z.ravel() for z in np.meshgrid(g,g,g,indexing='ij')); V=RU.size
+    res=[]
+    for RRv in range(26):    # core-based turnover: the step sequence depends on the RIGHT ring
+        seq=posseq(order,windows,N,(0,0,RRv))
+        out=np.empty((V,N),np.int8)
+        for t in range(N):
+            L,M,R=seq[t]; oL=(L-RL)%26; oM=(M-RM)%26; oR=(R-RRv)%26; u=(uwin-RU)%26
+            x=ETWR[int(ct[t])]
+            x=(rf[(x+oR)%26]-oR)%26; x=(mf[(x+oM)%26]-oM)%26; x=(lf[(x+oL)%26]-oL)%26
+            x=(UKWF[(x+u)%26]-u)%26
+            x=(lr[(x+oL)%26]-oL)%26; x=(mr[(x+oM)%26]-oM)%26; x=(rr[(x+oR)%26]-oR)%26
+            out[:,t]=ETWF[x]
+        cnt=np.zeros((V,26),np.int32)
+        for k in range(26): cnt[:,k]=(out==k).sum(1)
+        io=(cnt*(cnt-1)).sum(1)/(N*(N-1)); idx=np.argpartition(io,-40)[-40:]
+        for i in idx:
+            txt=''.join(A[v] for v in out[i])
+            res.append((float(io[i]),fscore(txt),wiring,'-'.join(order),
+                        (int(RU[i]),int(RL[i]),int(RM[i]),RRv),txt))
     res.sort(key=lambda z:(z[1],z[0]),reverse=True); return res[:topk]
 
 # ---- crib mode worker ----

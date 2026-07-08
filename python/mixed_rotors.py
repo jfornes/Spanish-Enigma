@@ -184,36 +184,41 @@ def _ioc_init(defs):
 
 
 def _ioc_full_worker(task):
-    """Score every full decode by IoC over the FULL 26^4 ring space (UKW ring
-    INCLUDED). corpus_sweep.ioc_worker fixes the UKW ring on a false gauge argument
-    and thereby misses any key whose UKW ring != 0 (it misses XMOT); this sweeps it."""
+    """Score every full decode by IoC over the FULL 26^4 ring space. Because the
+    turnover is now core-based ((window-ring)==notch_offset), the window/step sequence
+    depends on the RIGHT ring, so we loop over RR and recompute the sequence for each,
+    vectorising the other 26^3 rings. (When rotors I/II get offset notches, the middle
+    step will also depend on RM -> loop over (RR,RM); for now only III is offset-based.)"""
     import numpy as np
     wiring, order, windows, uwin, ct_list, topk = task
     ct = np.array(ct_list); N = len(ct)
     W = {k: cs.perm(cs.WIRINGS[wiring][k]) for k in ('I', 'II', 'III')}
     lf, lr = W[order[0]]; mf, mr = W[order[1]]; rf, rr = W[order[2]]
-    seq = cs.posseq(order, windows, N)
     g = np.arange(26)
-    RU, RL, RM, RR = (z.ravel() for z in np.meshgrid(g, g, g, g, indexing='ij'))   # full 26^4
-    V = RU.size
     ETWR = cs.ETWR; ETWF = cs.ETWF; UKWF = cs.UKWF; A = cs.A
-    out = np.empty((V, N), np.int8)
-    for t in range(N):
-        L, M, R = seq[t]; oL = (L - RL) % 26; oM = (M - RM) % 26; oR = (R - RR) % 26; u = (uwin - RU) % 26
-        x = ETWR[int(ct[t])]
-        x = (rf[(x + oR) % 26] - oR) % 26; x = (mf[(x + oM) % 26] - oM) % 26; x = (lf[(x + oL) % 26] - oL) % 26
-        x = (UKWF[(x + u) % 26] - u) % 26
-        x = (lr[(x + oL) % 26] - oL) % 26; x = (mr[(x + oM) % 26] - oM) % 26; x = (rr[(x + oR) % 26] - oR) % 26
-        out[:, t] = ETWF[x]
-    cnt = np.zeros((V, 26), np.int32)
-    for k in range(26):
-        cnt[:, k] = (out == k).sum(1)
-    io = (cnt * (cnt - 1)).sum(1) / (N * (N - 1))
-    idx = np.argpartition(io, -40)[-40:]; res = []
-    for i in idx:
-        txt = ''.join(A[v] for v in out[i])
-        res.append((float(io[i]), cs.fscore(txt), wiring, '-'.join(order),
-                    (int(RU[i]), int(RL[i]), int(RM[i]), int(RR[i])), txt))
+    RU, RL, RM = (z.ravel() for z in np.meshgrid(g, g, g, indexing='ij'))          # 26^3 (U,L,M)
+    V = RU.size
+    res = []
+    for RRv in range(26):
+        seq = cs.posseq(order, windows, N, (0, 0, RRv))       # right ring = RRv -> offset-based notch
+        out = np.empty((V, N), np.int8)
+        for t in range(N):
+            L, M, R = seq[t]
+            oL = (L - RL) % 26; oM = (M - RM) % 26; oR = (R - RRv) % 26; u = (uwin - RU) % 26
+            x = ETWR[int(ct[t])]
+            x = (rf[(x + oR) % 26] - oR) % 26; x = (mf[(x + oM) % 26] - oM) % 26; x = (lf[(x + oL) % 26] - oL) % 26
+            x = (UKWF[(x + u) % 26] - u) % 26
+            x = (lr[(x + oL) % 26] - oL) % 26; x = (mr[(x + oM) % 26] - oM) % 26; x = (rr[(x + oR) % 26] - oR) % 26
+            out[:, t] = ETWF[x]
+        cnt = np.zeros((V, 26), np.int32)
+        for k in range(26):
+            cnt[:, k] = (out == k).sum(1)
+        io = (cnt * (cnt - 1)).sum(1) / (N * (N - 1))
+        idx = np.argpartition(io, -40)[-40:]
+        for i in idx:
+            txt = ''.join(A[v] for v in out[i])
+            res.append((float(io[i]), cs.fscore(txt), wiring, '-'.join(order),
+                        (int(RU[i]), int(RL[i]), int(RM[i]), RRv), txt))
     res.sort(key=lambda z: (z[1], z[0]), reverse=True); return res[:topk]
 
 

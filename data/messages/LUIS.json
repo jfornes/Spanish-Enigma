@@ -19,5 +19,19 @@
   "ic": 0.0377,
   "n": 80,
   "source_type": "typed_intercept",
-  "notes": "Grundstellung LUIS is a memorable 'cilly' key. Garble check SIUL = reverse(LUIS); image last group reads SIVL (U/V typewriter ambiguity). Certification rests on garble + cilly key + endpoints + same series as nr 94, NOT on IC (0.0377 at the band edge, N=80 too small to decide)."
+  "notes": "Grundstellung LUIS is a memorable 'cilly' key. Garble check SIUL = reverse(LUIS); image last group reads SIVL (U/V typewriter ambiguity). Certification rests on garble + cilly key + endpoints + same series as nr 94, NOT on IC (0.0377 at the band edge, N=80 too small to decide). | Trencat 2026-07-08 (cablejat F, no C: el bug de l'anell d'UKW l'havia amagat). Numeros lletrejats.",
+  "found_by": "Jordi Fornes)",
+  "solution": {
+    "wiring": "F",
+    "rotor_order": "II-I-III",
+    "windows_ULMR": "SLUI",
+    "ringstellung_ULMR": "BWEV",
+    "notch_model": "core-based turnover: (finestra-anell)%26 == notch_offset; rotor III offset 22 (=W)",
+    "plaintext": "HORASHOYACCIONAERONABHSORDENADARADIOFECHACUATROPROSEGUIRADIASSIETEOCHOYNGEVEECGM",
+    "reading": "HORAS HOY ACCION AERONA[VAL] [·] ORDENADA RADIO FECHA CUATRO PROSEGUIR [·]DIAS SIETE OCHO [garble final]",
+    "recovered_by": "toolkit (corpus_sweep.py crib-drag + corrected stepping)",
+    "command": "python3 python/corpus_sweep.py data/messages/LUIS.json --crib CUATROPROSEGUIR --wirings F --all",
+    "solved_date": "2026-07-08",
+    "notes": "Ordre naval-aeronaval amb dates/hores (numeros LLETREJATS: CUATRO/SIETE/OCHO, cap NR/XK). Amb el stepping offset-based millora a frag 19; el residu (AERONAB->AERONAVAL, final YNGEVEECGM) es corrupcio real de transmissio, no del model."
+  }
 }

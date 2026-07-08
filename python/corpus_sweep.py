@@ -73,19 +73,37 @@ def crib_search_c(lib, wiring, ct, crib, grund, all_arr, threads):
                             0,off_hi,P(g),1 if all_arr else 0,threads,P(out),8192)
     return [tuple(int(x) for x in out[7*i:7*i+7]) for i in range(nh)]
 
-def posseq(order, windows, n):
-    tM=c2n[WIN[order[1]]]; tR=c2n[WIN[order[2]]]; L,M,R=windows; s=[]
-    for _ in range(n):
-        if M==tM: M=(M+1)%26; L=(L+1)%26
-        elif R==tR: M=(M+1)%26
-        R=(R+1)%26; s.append((L,M,R))
+# Core-notch offsets: the turnover fires when (window - ring) % 26 == offset, i.e. the
+# notch is on the rotor CORE, not on the ring. Only III is validated (offset 22 = W,
+# from XMOT and LUIS); I and II are not yet determined and fall back to the legacy
+# window-based turnover until pinned. See HANDOFF_stepping_fix.md.
+NOTCH_OFFSET = {'III': 22, 'I': None, 'II': None}
+
+def posseq(order, windows, n, rings=None):
+    L,M,R=windows; s=[]
+    if rings is None:                                   # legacy: turnover at window == letter
+        tM=c2n[WIN[order[1]]]; tR=c2n[WIN[order[2]]]
+        for _ in range(n):
+            if M==tM: M=(M+1)%26; L=(L+1)%26
+            elif R==tR: M=(M+1)%26
+            R=(R+1)%26; s.append((L,M,R))
+    else:                                               # core-based: (window - ring) == notch_offset
+        rl,rm,rr=rings                                  # (L,M,R) rings
+        nM=NOTCH_OFFSET.get(order[1]); nR=NOTCH_OFFSET.get(order[2])
+        tM=c2n[WIN[order[1]]]; tR=c2n[WIN[order[2]]]    # legacy fallback where the notch is unknown
+        for _ in range(n):
+            mAt=((M-rm)%26==nM) if nM is not None else (M==tM)
+            rAt=((R-rr)%26==nR) if nR is not None else (R==tR)
+            if mAt: M=(M+1)%26; L=(L+1)%26
+            elif rAt: M=(M+1)%26
+            R=(R+1)%26; s.append((L,M,R))
     return s
 def fscore(s): return sum(s.count(f)*len(f) for f in FRAG)
 
 def decode_all(wiring, order, windows, uwin, rings, ct):
     W={k:perm(WIRINGS[wiring][k]) for k in('I','II','III')}
     lf,lr=W[order[0]]; mf,mr=W[order[1]]; rf,rr=W[order[2]]
-    seq=posseq(order, windows, len(ct)); ru,rl,rm,rrr=rings; out=[]
+    ru,rl,rm,rrr=rings; seq=posseq(order, windows, len(ct), (rl,rm,rrr)); out=[]
     for t in range(len(ct)):
         L,M,R=seq[t]; u=(uwin-ru)%26; oL=(L-rl)%26; oM=(M-rm)%26; oR=(R-rrr)%26
         x=ETWR[int(ct[t])]

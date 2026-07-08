@@ -212,8 +212,8 @@ ensure every primary-source contribution includes its archival reference
 
 ## Acknowledgments
 
-Builds on the published work of José Ramón Soler Fuensanta, Arturo Quirantes
-Sierra, Frode Weierud, Geoff Sullivan and others on the Spanish Enigma. This
+Builds on the published work of Frode Weierud, José Ramón Soler Fuensanta, Arturo Quirantes
+Sierra, Geoff Sullivan and others on the Spanish Enigma. This
 repository complements rather than replaces their contributions; the wirings
 and procedures published in their work are reproduced here as data (with
 attribution) for reproducible analysis.

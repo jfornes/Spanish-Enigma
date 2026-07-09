@@ -67,9 +67,11 @@ def crib_search_c(lib, wiring, ct, crib, grund, all_arr, threads):
     wfwd=np.concatenate([vec(WIRINGS[wiring][k]) for k in ('I','II','III')]).astype(np.int32)
     etwf=vec(ETW); ukwf=vec(UKW); turn=vec(''.join(WIN[k] for k in ('I','II','III')))
     ctn=np.asarray(ct,np.int32); crn=np.asarray(crib,np.int32); g=vec(grund)
+    notch=np.array([NOTCH_OFFSET.get(k) if NOTCH_OFFSET.get(k) is not None else -1
+                    for k in ('I','II','III')], np.int32)   # core-notch offsets, -1 = legacy window
     n=len(ctn); off_hi=n-len(crn)
     out=np.zeros(7*8192,np.int32); P=lambda arr: arr.ctypes.data_as(ctypes.POINTER(ctypes.c_int))
-    nh=lib.rod_search_sweep(P(wfwd),P(etwf),P(ukwf),P(turn),P(ctn),n,P(crn),len(crn),
+    nh=lib.rod_search_sweep(P(wfwd),P(etwf),P(ukwf),P(turn),P(notch),P(ctn),n,P(crn),len(crn),
                             0,off_hi,P(g),1 if all_arr else 0,threads,P(out),8192)
     return [tuple(int(x) for x in out[7*i:7*i+7]) for i in range(nh)]
 

@@ -1,22 +1,3 @@
-/*
- * Spanish-Enigma: A research toolkit for the cryptanalysis of Spanish
- * Enigma K traffic (1936-1945)
- * Copyright (C) 2026  Jordi Fornés, Alba Rebull
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
-
 /* rods.c  -- concurrent rod/click crib search for unsteckered Enigma K.
  *
  * ARCHITECTURE
@@ -59,6 +40,7 @@ typedef struct {
     int ukwat[AL][AL];       /* reflector at UKW offset u */
     int etwf[AL], etwr[AL];  /* entry wheel forward / inverse */
     int turn[3];             /* window turnover letter per wheel (I,II,III) */
+    int notch[3];            /* core-notch OFFSET per wheel, or -1 = fall back to window turnover */
     const int *cipher; int n;
     const int *crib; int crib_len, crib_off;
     int off_lo, off_hi;          /* crib-offset sweep range (rod_search_sweep) */
@@ -69,8 +51,14 @@ typedef struct {
     pthread_mutex_t lock;
 } Ctx;
 
+/* modp(x): x mod 26, forced non-negative (C's % yields negatives for negative x). */
 static int modp(int x){ x%=AL; return x<0?x+AL:x; }
 
+/* build_rods: precompute Turing's "rod squares" once per search. For each wheel w
+ * and every core offset o, tabulate rodfwd[w][o][x] = the wheel permutation as seen
+ * at that offset (the wiring conjugated by the shift o) and rodrev = its inverse;
+ * likewise ukwat[u] for the reflector at offset u, plus the ETW forward/inverse
+ * maps. This reduces the inner crib test to pure array lookups (no arithmetic). */
 static void build_rods(Ctx *c, const int *wfwd, const int *etw_fwd,
                        const int *ukw_fwd, const int *turn) {
     for (int w=0; w<3; w++) {
@@ -90,7 +78,10 @@ static void build_rods(Ctx *c, const int *wfwd, const int *etw_fwd,
     for (int i=0;i<AL;i++){ c->etwf[i]=etw_fwd[i]; c->etwr[etw_fwd[i]]=i; }
 }
 
-/* window-position sequence (A27 stepping, ring-independent turnover) */
+/* posseq: fill Lp/Mp/Rp[0..upto) with the (left,mid,right) WINDOW letters at each
+ * keystroke, from start windows Lw/Mw/Rw and the mid/right turnover letters tM/tR.
+ * A27 stepping: a wheel turns when its WINDOW reaches its turnover letter (ring-
+ * independent); the middle wheel double-steps. Rings are applied later as offsets. */
 static void posseq(int Lw,int Mw,int Rw,int tM,int tR,int upto,
                    int *Lp,int *Mp,int *Rp){
     int L=Lw,M=Mw,R=Rw;
@@ -103,8 +94,30 @@ static void posseq(int Lw,int Mw,int Rw,int tM,int tR,int upto,
     }
 }
 
-typedef struct { Ctx *c; int tid; } Targ;
+/* posseq_off: like posseq but the turnover is CORE-based -- a wheel steps when its
+ * OFFSET (window-ring) reaches the notch offset nM/nR. Falls back to the window
+ * turnover (tM/tR) for any wheel whose notch offset is <0 (not yet determined).
+ * Since the RIGHT turnover now depends on rR, callers must recompute this per rR. */
+static void posseq_off(int Lw,int Mw,int Rw,int tM,int tR,int nM,int nR,int rM,int rR,int upto,
+                       int *Lp,int *Mp,int *Rp){
+    int L=Lw,M=Mw,R=Rw;
+    for (int t=0;t<upto;t++){
+        int m = (nM>=0) ? (modp(M-rM)==nM) : (M==tM);
+        int r = (nR>=0) ? (modp(R-rR)==nR) : (R==tR);
+        if (m){ M=(M+1)%AL; L=(L+1)%AL; }
+        else if (r){ M=(M+1)%AL; }
+        R=(R+1)%AL;
+        Lp[t]=L; Mp[t]=M; Rp[t]=R;
+    }
+}
 
+typedef struct { Ctx *c; int tid; } Targ;   /* per-thread arg: shared context + thread id */
+
+/* worker (for rod_search): each thread strides over the outer units
+ * arrangement x order x UKW-offset; for each it sweeps all 26^3 L/M/R ring settings
+ * and runs the crib "click" test -- decrypt every crib letter, and the first letter
+ * that fails to reproduce the crib is a contradiction (abandon this setting). A
+ * setting with zero contradictions is recorded (under the mutex) as a hit. */
 static void *worker(void *p){
     Targ *ta=(Targ*)p; Ctx *c=ta->c;
     int upto=c->crib_off+c->crib_len;
@@ -148,7 +161,10 @@ static void *worker(void *p){
     return NULL;
 }
 
-/* Exported entry point. Returns number of hits; fills out[6*hit]. */
+/* rod_search (EXPORTED): full exact-crib search. Builds the rod tables, sets the
+ * arrangement set (canonical (0,1,2) with UKW=grund[3], or all 24 if all_arr!=0),
+ * launches nthreads workers and joins them. Returns #hits; each hit = 6 ints
+ * [arrangement, order, ukw_offset, ringL, ringM, ringR]. */
 int rod_search(const int *wfwd, const int *etw_fwd, const int *ukw_fwd, const int *turn,
                const int *cipher, int n, const int *crib, int crib_len, int crib_off,
                const int *grund, int all_arr, int nthreads, int *out, int max_hits){
@@ -195,6 +211,9 @@ int rod_search(const int *wfwd, const int *etw_fwd, const int *ukw_fwd, const in
  * across a turnover through the middle-wheel rods (pp. 72-73), which pins the
  * middle-wheel position, is the further refinement and is not done here.
  * ------------------------------------------------------------------------- */
+/* cworker (for coupling_search): strides over arrangement x order x right-ring;
+ * builds the per-stretch coupling involution Q from the crib and rejects the rod
+ * start on any fixed point (a==b) or conflicting pairing (see method note above). */
 static void *cworker(void *p){
     Targ *ta=(Targ*)p; Ctx *c=ta->c;
     int upto=c->crib_off+c->crib_len;
@@ -270,6 +289,9 @@ int coupling_search(const int *wfwd, const int *etw_fwd, const int *ukw_fwd, con
  * This recovers BOTH the right and middle rings; L-ring and UKW remain folded
  * into P (recoverable only past a -- rare -- left-wheel turnover).
  * ------------------------------------------------------------------------- */
+/* lworker (for coupling_link_search): strides over arrangement x order x ringR x
+ * ringM; accumulates ONE involution P per left-window across ALL crib letters
+ * (cross-turnover linking) and rejects on contradiction. Pins both ringR and ringM. */
 static void *lworker(void *p){
     Targ *ta=(Targ*)p; Ctx *c=ta->c;
     int upto=c->crib_off+c->crib_len;
@@ -338,6 +360,8 @@ int coupling_link_search(const int *wfwd, const int *etw_fwd, const int *ukw_fwd
  * arrangement x order x 26^4 enumeration per offset. Hit = 7 ints:
  *   [crib_off, arrangement, order, ukw_offset, ringL, ringM, ringR]
  * ------------------------------------------------------------------------- */
+/* worker_sweep (for rod_search_sweep): threads partition the crib offsets; each runs
+ * the full arrangement x order x 26^4 (UKW + 3 rings) click test at its offsets. */
 static void *worker_sweep(void *p){
     Targ *ta=(Targ*)p; Ctx *c=ta->c;
     int Lp[MAXSTEP],Mp[MAXSTEP],Rp[MAXSTEP];
@@ -348,34 +372,38 @@ static void *worker_sweep(void *p){
             int Lw=c->grund[c->arr[ai][0]], Mw=c->grund[c->arr[ai][1]], Rw=c->grund[c->arr[ai][2]];
             for (int oi=0; oi<6; oi++){
                 int wL=ORDERS[oi][0], wM=ORDERS[oi][1], wR=ORDERS[oi][2];
-                posseq(Lw,Mw,Rw,c->turn[wM],c->turn[wR],upto,Lp,Mp,Rp);
-                for (int u=0;u<AL;u++)
-                for (int rL=0;rL<AL;rL++)
-                for (int rM=0;rM<AL;rM++)
                 for (int rR=0;rR<AL;rR++){
-                    int ok=1;
-                    for (int j=0;j<c->crib_len;j++){
-                        int t=co+j;
-                        int oR=modp(Rp[t]-rR), oM=modp(Mp[t]-rM), oL=modp(Lp[t]-rL);
-                        int x=c->etwr[c->cipher[t]];
-                        x=c->rodfwd[wR][oR][x];
-                        x=c->rodfwd[wM][oM][x];
-                        x=c->rodfwd[wL][oL][x];
-                        x=c->ukwat[u][x];
-                        x=c->rodrev[wL][oL][x];
-                        x=c->rodrev[wM][oM][x];
-                        x=c->rodrev[wR][oR][x];
-                        x=c->etwf[x];
-                        if (x!=c->crib[j]){ ok=0; break; }
-                    }
-                    if (ok){
-                        pthread_mutex_lock(&c->lock);
-                        if (c->nhits<c->max_hits){
-                            int *o=c->out+c->nhits*7;
-                            o[0]=co; o[1]=ai; o[2]=oi; o[3]=u; o[4]=rL; o[5]=rM; o[6]=rR;
-                            c->nhits++;
+                    /* core-based turnover depends on rR -> recompute the step sequence per rR.
+                     * (rM passed as 0: the middle notch is window-based for I/II; when a middle
+                     * rotor gets an offset notch, move this inside the rM loop too.) */
+                    posseq_off(Lw,Mw,Rw,c->turn[wM],c->turn[wR],c->notch[wM],c->notch[wR],0,rR,upto,Lp,Mp,Rp);
+                    for (int u=0;u<AL;u++)
+                    for (int rL=0;rL<AL;rL++)
+                    for (int rM=0;rM<AL;rM++){
+                        int ok=1;
+                        for (int j=0;j<c->crib_len;j++){
+                            int t=co+j;
+                            int oR=modp(Rp[t]-rR), oM=modp(Mp[t]-rM), oL=modp(Lp[t]-rL);
+                            int x=c->etwr[c->cipher[t]];
+                            x=c->rodfwd[wR][oR][x];
+                            x=c->rodfwd[wM][oM][x];
+                            x=c->rodfwd[wL][oL][x];
+                            x=c->ukwat[u][x];
+                            x=c->rodrev[wL][oL][x];
+                            x=c->rodrev[wM][oM][x];
+                            x=c->rodrev[wR][oR][x];
+                            x=c->etwf[x];
+                            if (x!=c->crib[j]){ ok=0; break; }
                         }
-                        pthread_mutex_unlock(&c->lock);
+                        if (ok){
+                            pthread_mutex_lock(&c->lock);
+                            if (c->nhits<c->max_hits){
+                                int *o=c->out+c->nhits*7;
+                                o[0]=co; o[1]=ai; o[2]=oi; o[3]=u; o[4]=rL; o[5]=rM; o[6]=rR;
+                                c->nhits++;
+                            }
+                            pthread_mutex_unlock(&c->lock);
+                        }
                     }
                 }
             }
@@ -386,11 +414,13 @@ static void *worker_sweep(void *p){
 
 /* Exported. Returns #hits; each hit = 7 ints (see above). */
 int rod_search_sweep(const int *wfwd, const int *etw_fwd, const int *ukw_fwd, const int *turn,
+                     const int *notch,
                      const int *cipher, int n, const int *crib, int crib_len,
                      int off_lo, int off_hi,
                      const int *grund, int all_arr, int nthreads, int *out, int max_hits){
     Ctx c; memset(&c,0,sizeof(c));
     build_rods(&c,wfwd,etw_fwd,ukw_fwd,turn);
+    for (int i=0;i<3;i++) c.notch[i]=notch[i];
     c.cipher=cipher; c.n=n; c.crib=crib; c.crib_len=crib_len;
     c.off_lo = off_lo<0 ? 0 : off_lo;
     c.off_hi = off_hi>n-crib_len ? n-crib_len : off_hi;
@@ -413,4 +443,155 @@ int rod_search_sweep(const int *wfwd, const int *etw_fwd, const int *ukw_fwd, co
     for (int i=0;i<c.nthreads;i++) pthread_join(th[i],NULL);
     pthread_mutex_destroy(&c.lock);
     return c.nhits;
+}
+
+/* ===========================================================================
+ * buttonup_anchor : Knox-style "buttoning up" of the FAST rotor wiring.
+ *
+ * The Python front-end reduces a crib to per-letter constraints
+ *     B_s[(rf[in]-o)%26] = (rf[out]-o)%26
+ * where rf is the (unknown) right-rotor forward wiring shared across the crib,
+ * o=(window-ring) the right-rotor offset, s the turnover-free stretch index,
+ * and B_s a fixed point-free involution per stretch (mid+left+UKW composite).
+ * This kernel brute-forces the two most-constrained contacts (the anchor that
+ * rodding would otherwise supply) over all 26x26 value pairs; for each it runs
+ * constraint propagation + backtracking to recover rf. Threads partition the
+ * 676 anchor seeds. Each full, consistent rf is written (26 ints) to out.
+ *
+ * Backtracking state is copied by value (simple + correct); if profiling on
+ * many cores shows this dominates, switch to undo-based propagation.
+ * ------------------------------------------------------------------------- */
+#define MAXSTR 8
+#define BU_NODECAP 2000000L
+
+typedef struct {
+    int  rf[AL];           /* -1 = unknown */
+    int  B[MAXSTR][AL];    /* -1 = unknown; one involution per stretch */
+    char used[AL];         /* used[v]=1 once value v is assigned to some contact */
+} BState;
+
+typedef struct {
+    const int *cin, *cout, *co, *cs;   /* constraint arrays, length ncons */
+    int ncons, nstr;
+    const int *touched; int ntouched;
+    int percon[AL];                    /* per-contact constraint count (ordering) */
+    int a, b;                          /* anchor contacts */
+    int *out; int max_sols; int nsols;
+    int nthreads;
+    pthread_mutex_t lock;
+} BuCtx;
+
+typedef struct { BuCtx *c; int tid; } Btarg;
+
+/* bu_propagate: constraint propagation to a fixpoint over the partial state st.
+ * Each constraint links two rf contacts through the per-stretch involution B and an
+ * offset o. If both rf ends are known it pins a B pair; if one rf end plus its B
+ * value are known it forces the other rf entry. Returns 0 on any contradiction
+ * (B fixed point, non-involution, or a repeated rf value breaking bijectivity). */
+static int bu_propagate(BState *st, BuCtx *c){
+    int changed=1;
+    while (changed){
+        changed=0;
+        for (int t=0;t<c->ncons;t++){
+            int i=c->cin[t], j=c->cout[t], o=c->co[t], s=c->cs[t];
+            int *bi=st->B[s];
+            int ri=st->rf[i], rj=st->rf[j];
+            if (ri!=-1 && rj!=-1){
+                int a1=modp(ri-o), a6=modp(rj-o);
+                if (a1==a6) return 0;                    /* involution: no fixed point */
+                if (bi[a1]==-1 && bi[a6]==-1){ bi[a1]=a6; bi[a6]=a1; changed=1; }
+                else if (bi[a1]!=a6 || bi[a6]!=a1) return 0;
+            } else if (ri!=-1){
+                int a1=modp(ri-o);
+                if (bi[a1]!=-1){
+                    int v=modp(bi[a1]+o);
+                    if (rj==-1){
+                        if (st->used[v]) return 0;
+                        st->rf[j]=v; st->used[v]=1; changed=1;
+                    } else if (rj!=v) return 0;
+                }
+            } else if (rj!=-1){
+                int a6=modp(rj-o);
+                if (bi[a6]!=-1){
+                    int v=modp(bi[a6]+o);
+                    if (st->rf[i]==-1){
+                        if (st->used[v]) return 0;
+                        st->rf[i]=v; st->used[v]=1; changed=1;
+                    } else if (st->rf[i]!=v) return 0;
+                }
+            }
+        }
+    }
+    return 1;
+}
+
+/* bu_rec: depth-first backtracking search (state passed BY VALUE so each branch has
+ * its own copy). Propagate; if that survives, pick the still-unassigned contact with
+ * the most constraints and try every unused value for it, recursing. A complete,
+ * consistent rf is written to the shared output. nodes is a per-anchor budget guard. */
+static void bu_rec(BState st, BuCtx *c, long *nodes){
+    if (*nodes > BU_NODECAP) return;
+    (*nodes)++;
+    if (!bu_propagate(&st,c)) return;
+    int k=-1, best=-1;                                   /* most-constrained unassigned contact */
+    for (int ti=0; ti<c->ntouched; ti++){
+        int cc=c->touched[ti];
+        if (st.rf[cc]==-1 && c->percon[cc]>best){ best=c->percon[cc]; k=cc; }
+    }
+    if (k==-1){                                          /* complete rf */
+        pthread_mutex_lock(&c->lock);
+        if (c->nsols < c->max_sols){
+            memcpy(c->out + (long)c->nsols*AL, st.rf, AL*sizeof(int));
+            c->nsols++;
+        }
+        pthread_mutex_unlock(&c->lock);
+        return;
+    }
+    for (int v=0; v<AL; v++){
+        if (st.used[v]) continue;
+        BState st2=st;
+        st2.rf[k]=v; st2.used[v]=1;
+        bu_rec(st2,c,nodes);
+    }
+}
+
+/* bu_worker: each thread takes a slice of the 26x26 anchor seeds. For each pair of
+ * values (va,vb) it seeds the two anchor contacts a,b, initialises an empty state,
+ * and launches bu_rec. Threads share only the output buffer (mutex-guarded). */
+static void *bu_worker(void *p){
+    Btarg *ta=(Btarg*)p; BuCtx *c=ta->c;
+    for (long idx=ta->tid; idx<AL*AL; idx+=c->nthreads){
+        int va=idx/AL, vb=idx%AL;
+        if (va==vb) continue;
+        BState st;
+        for (int i=0;i<AL;i++) st.rf[i]=-1;
+        for (int s=0;s<c->nstr;s++) for (int i=0;i<AL;i++) st.B[s][i]=-1;
+        for (int i=0;i<AL;i++) st.used[i]=0;
+        st.rf[c->a]=va; st.used[va]=1;
+        st.rf[c->b]=vb; st.used[vb]=1;
+        long nodes=0;
+        bu_rec(st,c,&nodes);
+    }
+    return NULL;
+}
+
+/* Exported. Returns #solutions (or -1 if nstr>MAXSTR); each solution = 26 ints
+ * (recovered rf). Anchor contacts a,b chosen by the front-end (most-constrained). */
+int buttonup_anchor(const int *cin,const int *cout,const int *co,const int *cs,int ncons,
+                    int nstr, const int *touched,int ntouched, int a,int b,
+                    int nthreads, int *out,int max_sols){
+    if (nstr>MAXSTR) return -1;
+    BuCtx c; memset(&c,0,sizeof(c));
+    c.cin=cin; c.cout=cout; c.co=co; c.cs=cs; c.ncons=ncons; c.nstr=nstr;
+    c.touched=touched; c.ntouched=ntouched;
+    for (int t=0;t<ncons;t++){ c.percon[cin[t]]++; c.percon[cout[t]]++; }
+    c.a=a; c.b=b; c.out=out; c.max_sols=max_sols; c.nsols=0;
+    c.nthreads = nthreads>0 ? nthreads : 1;
+    if (c.nthreads>256) c.nthreads=256;
+    pthread_mutex_init(&c.lock,NULL);
+    pthread_t th[256]; Btarg ta[256];
+    for (int i=0;i<c.nthreads;i++){ ta[i].c=&c; ta[i].tid=i; pthread_create(&th[i],NULL,bu_worker,&ta[i]); }
+    for (int i=0;i<c.nthreads;i++) pthread_join(th[i],NULL);
+    pthread_mutex_destroy(&c.lock);
+    return c.nsols;
 }

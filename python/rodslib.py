@@ -1,23 +1,4 @@
 #!/usr/bin/env python3
-
-# Spanish-Enigma: A research toolkit for the cryptanalysis of Spanish
-# Enigma K traffic (1936-1945)
-# Copyright (C) 2026  Jordi Fornés, Alba Rebull
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-#!/usr/bin/env python3
 """rodslib.py -- locate and load the compiled Enigma K search library (librods).
 
 Single loader shared by corpus_sweep.py, rods_frontend.py and buttonup.py. It
@@ -75,7 +56,7 @@ def load():
     sig = [P, P, P, P, P, ci, P, ci, ci, P, ci, ci, P, ci]      # rod_search / coupling / link
     specs = {
         'rod_search': sig, 'coupling_search': sig, 'coupling_link_search': sig,
-        'rod_search_sweep': [P, P, P, P, P, ci, P, ci, ci, ci, P, ci, ci, P, ci],
+        'rod_search_sweep': [P, P, P, P, P, P, ci, P, ci, ci, ci, P, ci, ci, P, ci],
         'buttonup_anchor':  [P, P, P, P, ci, ci, P, ci, ci, ci, ci, P, ci],
     }
     lib.kernels = []

@@ -1,22 +1,4 @@
 #!/usr/bin/env python3
-
-# Spanish-Enigma: A research toolkit for the cryptanalysis of Spanish
-# Enigma K traffic (1936-1945)
-# Copyright (C) 2026  Jordi Fornés, Alba Rebull
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 """
 buttonup.py -- Knox-style "buttoning up": recover the FAST (right) rotor wiring
 of a plugboard-free Enigma (commercial K, Spanish Civil War) from known-plaintext
@@ -58,7 +40,7 @@ def build_constraints(order, windows, uwin, rings, plain_ints, cipher_ints):
     windows=(L,M,R), rings=(U,L,M,R). Stretch id bumps when the middle window
     steps -- each stretch shares R but has its own involution B."""
     rR = rings[3]
-    seq = cs.posseq(order, windows, len(plain_ints))     # (L,M,R) window per letter
+    seq = cs.posseq(order, windows, len(plain_ints), rings[1:])     # (L,M,R) window per letter
     sid = []; cur = seq[0][1]; s = 0
     for (l, m, r) in seq:
         if m != cur:
@@ -251,7 +233,7 @@ def build_middle_involutions(order, windows, uwin, rings, rf, plain_ints, cipher
     """Peel the known right rotor rf; tabulate, per middle offset, the involution
     E_o pairing the middle rotor's external contacts. Returns {offset: {a: b}}."""
     rR, rM = rings[3], rings[2]
-    seq = cs.posseq(order, windows, len(plain_ints))
+    seq = cs.posseq(order, windows, len(plain_ints), rings[1:])
     E = {}
     for t in range(len(plain_ints)):
         oR = (seq[t][2] - rR) % 26; oM = (seq[t][1] - rM) % 26
@@ -331,7 +313,7 @@ def build_left_edges(order, windows, uwin, rings, R, Mid, plain_ints, cipher_int
     """Peel the known right rotor R and middle rotor Mid; return left-rotor edges
     (a, bb, oL) for ONE message. windows=(L,M,R), rings=(U,L,M,R)."""
     rR, rM, rL = rings[3], rings[2], rings[1]
-    seq = cs.posseq(order, windows, len(plain_ints))
+    seq = cs.posseq(order, windows, len(plain_ints), rings[1:])
     def conj(perm, off, x): return (perm[(x + off) % 26] - off) % 26
     edges = []
     for t in range(len(plain_ints)):

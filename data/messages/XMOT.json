@@ -27,13 +27,12 @@
       "rotor_order": "II-I-III",
       "windows_ULMR": "TXMO",
       "ringstellung_ULMR": "WXGA",
-      "notch_model": "core-based turnover: (finestra-anell)%26 == notch_offset; rotor III offset 22 (=W)",
       "plaintext": "PONERQUEMOVIMIENTOBARCOSCONSECUENCIANUESTROCACAREADODESEMBARCOTOMEPRECAUCIONESPORSIENEMIGOINTENTASEALGUNAACCIONSOBREMALLORCAOIBIZAWW",
       "reading": "PONERQUEMOVIMIENTOBARCOS «de que me da cuenta en sus telegramas es» CONSECUENCIANUESTROCACAREADODESEMBARCOTOMEPRECAUCIONESPORSIENEMIGOINTENTASEALGUNAACCIONSOBREMALLORCAOIBIZAWW",
       "recovered_by": "toolkit (mixed_rotors.py IoC-blind + corrected stepping)",
       "command": "python3 python/corpus_sweep.py data/messages/XMOT.json --crib MOVIMIENTOBARCOS --wirings F --all",
       "solved_date": "2026-07-08",
-      "notes": "El notch del turnover es al nucli (offset 22), no a la finestra; amb el fix, XMOT es llegeix sencer d'una sola clau (frag 68). Amb l'stepping offset-based, l'arranjament CANONIC (TXMO) es el #1 net (IoC 0.073): la convencio canonica queda revalidada; l'antiga confusio WXFA/WXIY era el bug de stepping.",
+      "notes": "Es llegeix sencer i net d'una sola clau (arranjament canonic).",
       "arrangement": "canonical"
     }
   }

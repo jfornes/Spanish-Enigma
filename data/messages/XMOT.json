@@ -21,19 +21,20 @@
     "n": 152,
     "source_type": "typed_intercept",
     "notes": "Strongest certification (4/4 lines). Doubled 2-group blocks (FAEQ LHDF; OLZW HVMK) are retransmission artifacts, not cipher; de-doubled body = 38 groups, IC quoted is de-doubled. Grundstellung XMOT transmitted in clear; embedded plaintext mid-body = crib. Page bears red GABINETE DE CIFRA stamp + ENTRADA stamp (11 DIC 1936, 10:35). Priority decryption target. | De-doblat 2026-07-08: el grup 'OLZW HVMK' anava DUPLICAT a la transmissio original (140->132 lletres); col.lapsat a una ocurrencia, insert <PLAIN> conservat.",
-    "found_by": "Jordi Fornes",
+    "found_by": "TO FILL — qui va localitzar el missatge a l'arxiu (crèdit)",
     "solution": {
       "wiring": "F",
       "rotor_order": "II-I-III",
-      "windows_ULMR": "TXOM",
-      "ringstellung_ULMR": "WXIY",
+      "windows_ULMR": "TXMO",
+      "ringstellung_ULMR": "WXGA",
       "notch_model": "core-based turnover: (finestra-anell)%26 == notch_offset; rotor III offset 22 (=W)",
       "plaintext": "PONERQUEMOVIMIENTOBARCOSCONSECUENCIANUESTROCACAREADODESEMBARCOTOMEPRECAUCIONESPORSIENEMIGOINTENTASEALGUNAACCIONSOBREMALLORCAOIBIZAWW",
       "reading": "PONERQUEMOVIMIENTOBARCOS «de que me da cuenta en sus telegramas es» CONSECUENCIANUESTROCACAREADODESEMBARCOTOMEPRECAUCIONESPORSIENEMIGOINTENTASEALGUNAACCIONSOBREMALLORCAOIBIZAWW",
       "recovered_by": "toolkit (mixed_rotors.py IoC-blind + corrected stepping)",
-      "command": "python3 python/mixed_rotors.py data/messages/XMOT.json --mix --arr all --consensus --procs 12",
+      "command": "python3 python/corpus_sweep.py data/messages/XMOT.json --crib MOVIMIENTOBARCOS --wirings F --all",
       "solved_date": "2026-07-08",
-      "notes": "El notch del turnover es al nucli (offset 22), no a la finestra; amb el fix, XMOT es llegeix sencer d'una sola clau (frag 68)."
+      "notes": "El notch del turnover es al nucli (offset 22), no a la finestra; amb el fix, XMOT es llegeix sencer d'una sola clau (frag 68). Amb l'stepping offset-based, l'arranjament CANONIC (TXMO) es el #1 net (IoC 0.073): la convencio canonica queda revalidada; l'antiga confusio WXFA/WXIY era el bug de stepping.",
+      "arrangement": "canonical"
     }
   }
 ]

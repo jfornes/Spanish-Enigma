@@ -82,7 +82,7 @@ static void build_rods(Ctx *c, const int *wfwd, const int *etw_fwd,
  * keystroke, from start windows Lw/Mw/Rw and the mid/right turnover letters tM/tR.
  * A27 stepping: a wheel turns when its WINDOW reaches its turnover letter (ring-
  * independent); the middle wheel double-steps. Rings are applied later as offsets. */
-static void posseq(int Lw,int Mw,int Rw,int tM,int tR,int upto,
+static void __attribute__((unused)) posseq(int Lw,int Mw,int Rw,int tM,int tR,int upto,
                    int *Lp,int *Mp,int *Rp){
     int L=Lw,M=Mw,R=Rw;
     for (int t=0;t<upto;t++){
@@ -128,33 +128,34 @@ static void *worker(void *p){
         int oi=q%6; int ai=q/6;
         int Lw=c->grund[c->arr[ai][0]], Mw=c->grund[c->arr[ai][1]], Rw=c->grund[c->arr[ai][2]];
         int wL=ORDERS[oi][0], wM=ORDERS[oi][1], wR=ORDERS[oi][2];
-        posseq(Lw,Mw,Rw,c->turn[wM],c->turn[wR],upto,Lp,Mp,Rp);
-        for (int rL=0;rL<AL;rL++)
-        for (int rM=0;rM<AL;rM++)
         for (int rR=0;rR<AL;rR++){
-            int ok=1;
-            for (int j=0;j<c->crib_len;j++){
-                int t=c->crib_off+j;
-                int oR=modp(Rp[t]-rR), oM=modp(Mp[t]-rM), oL=modp(Lp[t]-rL);
-                int x=c->etwr[c->cipher[t]];
-                x=c->rodfwd[wR][oR][x];
-                x=c->rodfwd[wM][oM][x];
-                x=c->rodfwd[wL][oL][x];
-                x=c->ukwat[u][x];
-                x=c->rodrev[wL][oL][x];
-                x=c->rodrev[wM][oM][x];
-                x=c->rodrev[wR][oR][x];
-                x=c->etwf[x];
-                if (x!=c->crib[j]){ ok=0; break; }     /* contradiction -> abandon */
-            }
-            if (ok){                                    /* zero contradictions: a hit */
-                pthread_mutex_lock(&c->lock);
-                if (c->nhits<c->max_hits){
-                    int *o=c->out+c->nhits*6;
-                    o[0]=ai; o[1]=oi; o[2]=u; o[3]=rL; o[4]=rM; o[5]=rR;
-                    c->nhits++;
+            posseq_off(Lw,Mw,Rw,c->turn[wM],c->turn[wR],c->notch[wM],c->notch[wR],0,rR,upto,Lp,Mp,Rp);
+            for (int rL=0;rL<AL;rL++)
+            for (int rM=0;rM<AL;rM++){
+                int ok=1;
+                for (int j=0;j<c->crib_len;j++){
+                    int t=c->crib_off+j;
+                    int oR=modp(Rp[t]-rR), oM=modp(Mp[t]-rM), oL=modp(Lp[t]-rL);
+                    int x=c->etwr[c->cipher[t]];
+                    x=c->rodfwd[wR][oR][x];
+                    x=c->rodfwd[wM][oM][x];
+                    x=c->rodfwd[wL][oL][x];
+                    x=c->ukwat[u][x];
+                    x=c->rodrev[wL][oL][x];
+                    x=c->rodrev[wM][oM][x];
+                    x=c->rodrev[wR][oR][x];
+                    x=c->etwf[x];
+                    if (x!=c->crib[j]){ ok=0; break; }     /* contradiction -> abandon */
                 }
-                pthread_mutex_unlock(&c->lock);
+                if (ok){                                    /* zero contradictions: a hit */
+                    pthread_mutex_lock(&c->lock);
+                    if (c->nhits<c->max_hits){
+                        int *o=c->out+c->nhits*6;
+                        o[0]=ai; o[1]=oi; o[2]=u; o[3]=rL; o[4]=rM; o[5]=rR;
+                        c->nhits++;
+                    }
+                    pthread_mutex_unlock(&c->lock);
+                }
             }
         }
     }
@@ -166,10 +167,12 @@ static void *worker(void *p){
  * launches nthreads workers and joins them. Returns #hits; each hit = 6 ints
  * [arrangement, order, ukw_offset, ringL, ringM, ringR]. */
 int rod_search(const int *wfwd, const int *etw_fwd, const int *ukw_fwd, const int *turn,
+               const int *notch,
                const int *cipher, int n, const int *crib, int crib_len, int crib_off,
                const int *grund, int all_arr, int nthreads, int *out, int max_hits){
     Ctx c; memset(&c,0,sizeof(c));
     build_rods(&c,wfwd,etw_fwd,ukw_fwd,turn);
+    for (int i=0;i<3;i++) c.notch[i]=notch[i];
     c.cipher=cipher; c.n=n; c.crib=crib; c.crib_len=crib_len; c.crib_off=crib_off;
     for (int i=0;i<4;i++) c.grund[i]=grund[i];
     c.out=out; c.max_hits=max_hits; c.nhits=0;
@@ -224,7 +227,7 @@ static void *cworker(void *p){
         int Lw=c->grund[c->arr[ai][0]], Mw=c->grund[c->arr[ai][1]], Rw=c->grund[c->arr[ai][2]];
         int wL=ORDERS[oi][0], wM=ORDERS[oi][1], wR=ORDERS[oi][2];
         (void)wL;
-        posseq(Lw,Mw,Rw,c->turn[wM],c->turn[wR],upto,Lp,Mp,Rp);
+        posseq_off(Lw,Mw,Rw,c->turn[wM],c->turn[wR],c->notch[wM],c->notch[wR],0,ringR,upto,Lp,Mp,Rp);
         int pair[AL]; for (int i=0;i<AL;i++) pair[i]=-1;
         int prevM=Mp[c->crib_off], prevL=Lp[c->crib_off], ok=1;
         for (int j=0;j<c->crib_len;j++){
@@ -254,10 +257,12 @@ static void *cworker(void *p){
 
 /* Exported. Returns #hits; each hit = 3 ints [arrangement, order, right-ring]. */
 int coupling_search(const int *wfwd, const int *etw_fwd, const int *ukw_fwd, const int *turn,
+                    const int *notch,
                     const int *cipher, int n, const int *crib, int crib_len, int crib_off,
                     const int *grund, int all_arr, int nthreads, int *out, int max_hits){
     Ctx c; memset(&c,0,sizeof(c));
     build_rods(&c,wfwd,etw_fwd,ukw_fwd,turn);
+    for (int i=0;i<3;i++) c.notch[i]=notch[i];
     c.cipher=cipher; c.n=n; c.crib=crib; c.crib_len=crib_len; c.crib_off=crib_off;
     for (int i=0;i<4;i++) c.grund[i]=grund[i];
     c.out=out; c.max_hits=max_hits; c.nhits=0;
@@ -304,7 +309,7 @@ static void *lworker(void *p){
         int oi=q%6; int ai=q/6;
         int Lw=c->grund[c->arr[ai][0]], Mw=c->grund[c->arr[ai][1]], Rw=c->grund[c->arr[ai][2]];
         int wM=ORDERS[oi][1], wR=ORDERS[oi][2];
-        posseq(Lw,Mw,Rw,c->turn[wM],c->turn[wR],upto,Lp,Mp,Rp);
+        posseq_off(Lw,Mw,Rw,c->turn[wM],c->turn[wR],c->notch[wM],c->notch[wR],rM,rR,upto,Lp,Mp,Rp);
         for (int i=0;i<AL;i++) for (int k=0;k<AL;k++) P[i][k]=-1;
         int ok=1;
         for (int j=0;j<c->crib_len;j++){
@@ -331,10 +336,12 @@ static void *lworker(void *p){
 
 /* Exported. Returns #hits; each hit = 4 ints [arrangement, order, ringR, ringM]. */
 int coupling_link_search(const int *wfwd, const int *etw_fwd, const int *ukw_fwd, const int *turn,
+                         const int *notch,
                          const int *cipher, int n, const int *crib, int crib_len, int crib_off,
                          const int *grund, int all_arr, int nthreads, int *out, int max_hits){
     Ctx c; memset(&c,0,sizeof(c));
     build_rods(&c,wfwd,etw_fwd,ukw_fwd,turn);
+    for (int i=0;i<3;i++) c.notch[i]=notch[i];
     c.cipher=cipher; c.n=n; c.crib=crib; c.crib_len=crib_len; c.crib_off=crib_off;
     for (int i=0;i<4;i++) c.grund[i]=grund[i];
     c.out=out; c.max_hits=max_hits; c.nhits=0;

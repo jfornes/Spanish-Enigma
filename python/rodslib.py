@@ -53,7 +53,7 @@ def load():
         return _lib
     lib = ctypes.CDLL(library_path())
     P = ctypes.POINTER(ctypes.c_int); ci = ctypes.c_int
-    sig = [P, P, P, P, P, ci, P, ci, ci, P, ci, ci, P, ci]      # rod_search / coupling / link
+    sig = [P, P, P, P, P, P, ci, P, ci, ci, P, ci, ci, P, ci]  # rod_search / coupling / link (+notch)
     specs = {
         'rod_search': sig, 'coupling_search': sig, 'coupling_link_search': sig,
         'rod_search_sweep': [P, P, P, P, P, P, ci, P, ci, ci, ci, P, ci, ci, P, ci],

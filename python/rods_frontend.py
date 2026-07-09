@@ -1,22 +1,4 @@
 #!/usr/bin/env python3
-
-# Spanish-Enigma: A research toolkit for the cryptanalysis of Spanish
-# Enigma K traffic (1936-1945)
-# Copyright (C) 2026  Jordi Fornés, Alba Rebull
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 """rods_frontend.py -- Python front-end for the C rod-search library (librods).
 
 The front-end does I/O, JSON parsing, statistics (IoC) and orchestration; the C
@@ -49,6 +31,12 @@ def _load_wirings():
 _WIR=_load_wirings()
 WIRINGS={s:{r:d['wiring'] for r,d in rot.items()} for s,rot in _WIR['rotor_sets'].items()}
 UKW=_WIR['ukw']; ETW=_WIR['etw']; WIN=_WIR['turnovers']
+# Core-notch offsets (turnover fires when (window-ring)%26==offset). Only III is
+# validated (22=W); I/II unknown -> -1 = fall back to window turnover. Keep in sync
+# with corpus_sweep.NOTCH_OFFSET until wirings.json carries the field.
+NOTCH_OFFSET={'III':22,'I':None,'II':None}
+def _notchvec(): return np.array([NOTCH_OFFSET.get(k) if NOTCH_OFFSET.get(k) is not None else -1
+                                  for k in ('I','II','III')], np.int32)
 ORDERS=[(0,1,2),(0,2,1),(1,0,2),(1,2,0),(2,0,1),(2,1,0)]   # must match rods.c
 NAMES=['I','II','III']
 def vec(s): return np.array([c2n[c] for c in s], dtype=np.int32)
@@ -135,7 +123,8 @@ def _call(fn, wiring, cipher, crib, crib_off, grund, all_arr, threads, stride):
     etwf=vec(ETW); ukwf=vec(UKW); turn=vec(''.join(WIN[k] for k in('I','II','III')))
     ct=np.asarray(cipher,np.int32); cr=np.asarray(crib,np.int32); g=vec(grund)
     out=np.zeros(stride*8192,np.int32); P=lambda a:a.ctypes.data_as(ctypes.POINTER(ctypes.c_int))
-    nh=fn(P(wfwd),P(etwf),P(ukwf),P(turn),P(ct),len(ct),P(cr),len(cr),crib_off,
+    nt=_notchvec()
+    nh=fn(P(wfwd),P(etwf),P(ukwf),P(turn),P(nt),P(ct),len(ct),P(cr),len(cr),crib_off,
           P(g),1 if all_arr else 0,threads,P(out),8192)
     return [tuple(int(x) for x in out[stride*i:stride*i+stride]) for i in range(nh)]
 def brute(lib,*a):    return _call(lib.rod_search,*a,6)
@@ -148,7 +137,8 @@ def sweep_offsets(lib, wiring, cipher, crib, grund, all_arr, threads):
     etwf=vec(ETW); ukwf=vec(UKW); turn=vec(''.join(WIN[k] for k in('I','II','III')))
     ct=np.asarray(cipher,np.int32); cr=np.asarray(crib,np.int32); g=vec(grund)
     out=np.zeros(7*8192,np.int32); P=lambda x:x.ctypes.data_as(ctypes.POINTER(ctypes.c_int))
-    nh=lib.rod_search_sweep(P(wfwd),P(etwf),P(ukwf),P(turn),P(ct),len(ct),P(cr),len(cr),
+    nt=_notchvec()
+    nh=lib.rod_search_sweep(P(wfwd),P(etwf),P(ukwf),P(turn),P(nt),P(ct),len(ct),P(cr),len(cr),
                             0,len(ct)-len(cr),P(g),1 if all_arr else 0,threads,P(out),8192)
     return [int(out[7*i]) for i in range(nh)]
 def order_name(oi): return '-'.join(NAMES[w] for w in ORDERS[oi])

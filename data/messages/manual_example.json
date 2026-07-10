@@ -5,6 +5,8 @@
   "wiring": "F",
   "rotor_order": "II-III-I",
   "ringstellung_ULMR": "QDRR",
+  "grundstellung": "MNAS",
+  "garble_check": "SANM",
   "grundstellung_ULMR": "MNAS",
   "plaintext_prefix": "ENEMIGOCARECEMUNICIONESAPRESEMOSLE",
   "cipher_prefix": "RCHBFZZKNVJXTUAYNZKWRUHCHPSXKKWLZM",
@@ -13,5 +15,4 @@
   "plaintext": "ENEMIGOCARECEMUNICIONESAPRESAMOSLENRTWTPXKDECANONYNROTPPPPXKFUSILWWW",
   "ciphertext": "RCHBFZZKNVJXTUAYNZKWRUHCHPSXKKWLZMBYNVWVGUMCWZMJVEEPZQXFDWFHRIRRZHXC",
   "plaintext_note": "68 lletres. Numeros codificats en QWERTZ entre NR/XK: TWTP=5250, OTPPPP=950000; DECANON=DE CANON (N->cap), FUSIL, WWW=farciment. Text: ENEMIGO CARECE MUNICIONES APRESAMOSLE NR 5250 XK DE CANON Y NR 950000 XK FUSIL.",
-  "wiring_note": "Weierud/Soler associen aquest manual (lot A1232-1235) amb wiring C. PERO: (a) el cablejat C NO esta recuperat, aixi que NO es pot provar l empiricament; (b) el cablejat F SI es pot provar i reprodueix l exemple a 66/68. Empiricament, doncs, l exemple es F, no C. Possible: l exemple es va treballar en una maquina F (el manual esta anotat K-204). Tema per contrastar amb Weierud."
 }

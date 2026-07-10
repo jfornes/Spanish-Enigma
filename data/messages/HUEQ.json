@@ -15,6 +15,6 @@
     "content": "Missatge d'adhesio i lealtat al Caudillo, del Comandante de Marina de Balears al Generalisimo.",
     "recovered_by": "toolkit (IoC-blind corpus_sweep --all --wirings D,F)",
     "solved_date": "2026-07-08",
-    "note": "Rotor II a la dreta (ordre I-III-II). Residu de garble = el notch del II encara no esta calibrat net (valor preliminar ~P). HUEQ es el primer missatge que porta el II a la dreta -> permet pinar-lo."
+    "note": "Rotor II a la dreta (ordre I-III-II)."
   }
 }

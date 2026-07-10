@@ -19,11 +19,11 @@
   "ic": 0.0402,
   "n": 84,
   "source_type": "typed_intercept",
-  "notes": "nr 69 'el 7 a las 01.40' (your template showed 1936-12-06; document reads day 7). Repetition of an earlier message ('Me refiero a error en YPSQ VHRH DHZB NWTC') — the 4-group indicator is quoted in clear, reusing Grundstellung DHZB. ACTIONABLE: locate the original message with this same header for a depth pair. DHZB is the Grundstellung whose wiring-F brute force failed; retry with wiring C.",
-  "found_by": "TO FILL — qui va localitzar el missatge a l'arxiu (credit)",
+  "notes": "nr 69 'el 7 a las 01.40' Repetition of an earlier message ('Me refiero a error en YPSQ VHRH DHZB NWTC') — the 4-group indicator is quoted in clear, reusing Grundstellung DHZB. ACTIONABLE: locate the original message with this same header for a depth pair. DHZB is the Grundstellung whose wiring-F or D brute force failed; retry with wiring C?",
+  "found_by": "Jordi Fornés",
   "status": {
     "solved": false,
-    "assessment": "No desxifra amb D ni F, ni pur ni barrejat (escombrada IoC exhaustiva 26^4). Grund confirmat (garble_check = grund invertit). Es un re-enviament marcat per error ('Me refiero a error en YPSQ VHRH DHZB NWTC'); l'explicacio mes parsimoniosa (Occam) es que el criptograma esta corromput (F rebut malament), no un cablejat diferent.",
+    "assessment": "No desxifra amb D ni F, ni pur ni barrejat (escombrada IoC exhaustiva 26^4). Grund confirmat (garble_check = grund invertit). Es un re-enviament marcat per error ('Me refiero a error en YPSQ VHRH DHZB NWTC'); l'explicacio mes senzilla (Occam) es que el criptograma esta corromput (F rebut malament), no un cablejat diferent, pero cal pensar en d'altres possibilitats.",
     "checked_with": "python3 python/mixed_rotors.py data/messages/DHZB.json --mix --arr all --procs 12",
     "checked_date": "2026-07-08"
   }

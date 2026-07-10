@@ -1,18 +1,20 @@
 {
-  "archive": "CDMH",
-  "signature": "Caja 745",
-  "date_transmission": "1936-12-05",
-  "date_interception": null,
-  "sender": "Comandante de Marina de Baleares (Palma de Mallorca)",
-  "recipient": "Generalísimo (Salamanca)",
-  "header": null,
-  "grundstellung": null,
-  "body": "HUEQ GPGJ HLHF VUAC SAHM ZHPQ KGYH IEBU NVNS LYHU DEPW PHUW GFNX JQXN FPNX EJST IVWZ LIFQ MNMP VOZC VPTG RYYZ VHNB YRVE YDRR KRAZ HASH QYQL AAKI KFQF JDHG OWKA SKTC BUSQ NMGC VNLG QZKB SFAV ZBRL JOWC SALW XSAL XCKM",
-  "garble_check": null,
-  "reference": "ref 1441 y 49",
-  "classification": "candidate",
-  "ic": 0.0373,
-  "n": 172,
-  "source_type": "analyst_manuscript",
-  "notes": "nr 56, 'el 5 a las 18,35'. Hand-copied analyst working note, NOT a raw intercept. Routing header extracted to a call-sign legend (Palma / Salamanca), so garble/Grundstellung not in body — absence is non-diagnostic. Same series as nr 94 (LUIS). IC 0.0373 marginally below band; handwriting transcription uncertain (H written as 4). Cannot be formally certified from this copy."
+  "grundstellung": "MKCX",
+  "body": "HUEQ GPGJ HLHF VUAC SAHM ZHPQ KGYH IEBU NVNS LYHU DEPW PHUW GFNX JQXN FPNX EJST IVWZ UFQZ MNMP VOZC VPTG RYYZ VHNS YRVE YDRR KRAZ HASH QYQL AAKI KFQF JDHG OWKA SKTC BUSQ NMGC VNLG QZKB SFAV ZBRL JOWC SALW XSHL",
+  "garble_check": "XCKM",
+  "header": "Procedencia EGZ=Palma; Destino EFGC=Salamanca; nr 56 p 52 el 5 a las 18,35; 'Comandante mar Baleares al Generalisimo'",
+  "found_by": "TO FILL — qui va localitzar el missatge a l'arxiu (credit)",
+  "notes": "Transcrit de msg7.png. Grund HIPOTESI: ultim grup XCKM invertit = MKCX (patro garble-check com XMOT/LUIS/DHZB). Dues posicions dubtoses: els '8' de EJ8T i VHN8, transcrits provisionalment com a S. n=168.",
+  "status": {
+    "solved": true,
+    "confidence": "alta (contingut castella llegible) / stepping del rotor II encara per calibrar del tot",
+    "wiring": "F",
+    "rotor_order": "I-III-II",
+    "grundstellung": "MKCX (hipotesi: ultim grup XCKM invertit -> CONFIRMADA)",
+    "reading": "...AL GENERAL[ISIMO]... REITERO MI... Y LEAL[T]AD... [AD]HESION... EN LOS DESTINOS DE LA PATRIA REGIDA POR... [V]IVA EL [C]AUDILLO",
+    "content": "Missatge d'adhesio i lealtat al Caudillo, del Comandante de Marina de Balears al Generalisimo.",
+    "recovered_by": "toolkit (IoC-blind corpus_sweep --all --wirings D,F)",
+    "solved_date": "2026-07-08",
+    "note": "Rotor II a la dreta (ordre I-III-II). Residu de garble = el notch del II encara no esta calibrat net (valor preliminar ~P). HUEQ es el primer missatge que porta el II a la dreta -> permet pinar-lo."
+  }
 }

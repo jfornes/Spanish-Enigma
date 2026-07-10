@@ -1,0 +1,17 @@
+{
+  "label": "manual_example",
+  "source": "Manual de Sarmiento (nov 1936), exemple xifrat treballat; PDF via Frode Weierud",
+  "found_by": "Frode Weierud (manual PDF + transcripcio HTML)",
+  "wiring": "F",
+  "rotor_order": "II-III-I",
+  "ringstellung_ULMR": "QDRR",
+  "grundstellung_ULMR": "MNAS",
+  "plaintext_prefix": "ENEMIGOCARECEMUNICIONESAPRESEMOSLE",
+  "cipher_prefix": "RCHBFZZKNVJXTUAYNZKWRUHCHPSXKKWLZM",
+  "validation": "66/68 amb wiring F (ordre II-III-I, ring QDRR, grund MNAS). Prefix (34) exacte. Les 2 discrepancies (pos 36 i 62) cauen totes dues a offset 11 del rotor dret -> no les arregla cap notch (no es stepping); versemblantment errors de calcul a ma del 1936 o de transcripcio. D dona 1-2/68 (atzar).",
+  "note": "El manual/Soler associen el lot A1232-1235 amb wiring C, pero aquest exemple reprodueix amb F (el manual esta anotat K-204). Vector de veritat per validacio.",
+  "plaintext": "ENEMIGOCARECEMUNICIONESAPRESAMOSLENRTWTPXKDECANONYNROTPPPPXKFUSILWWW",
+  "ciphertext": "RCHBFZZKNVJXTUAYNZKWRUHCHPSXKKWLZMBYNVWVGUMCWZMJVEEPZQXFDWFHRIRRZHXC",
+  "plaintext_note": "68 lletres. Numeros codificats en QWERTZ entre NR/XK: TWTP=5250, OTPPPP=950000; DECANON=DE CANON (N->cap), FUSIL, WWW=farciment. Text: ENEMIGO CARECE MUNICIONES APRESAMOSLE NR 5250 XK DE CANON Y NR 950000 XK FUSIL.",
+  "wiring_note": "Weierud/Soler associen aquest manual (lot A1232-1235) amb wiring C. PERO: (a) el cablejat C NO esta recuperat, aixi que NO es pot provar l empiricament; (b) el cablejat F SI es pot provar i reprodueix l exemple a 66/68. Empiricament, doncs, l exemple es F, no C. Possible: l exemple es va treballar en una maquina F (el manual esta anotat K-204). Tema per contrastar amb Weierud."
+}

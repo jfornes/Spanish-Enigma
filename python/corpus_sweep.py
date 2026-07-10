@@ -120,13 +120,15 @@ def ioc_worker(task):
     wiring, order, windows, uwin, ct_list, topk = task
     ct=np.array(ct_list); N=len(ct); W={k:perm(WIRINGS[wiring][k]) for k in('I','II','III')}
     lf,lr=W[order[0]]; mf,mr=W[order[1]]; rf,rr=W[order[2]]
-    g=np.arange(26); RU,RL,RM=(z.ravel() for z in np.meshgrid(g,g,g,indexing='ij')); V=RU.size
+    g=np.arange(26); RU,RL,Ro=(z.ravel() for z in np.meshgrid(g,g,g,indexing='ij')); V=RU.size
+    mid_off = NOTCH_OFFSET.get(order[1]) is not None   # middle core-notch -> stepping depends on RM
     res=[]
-    for RRv in range(26):    # core-based turnover: the step sequence depends on the RIGHT ring
-        seq=posseq(order,windows,N,(0,0,RRv))
+    for Lv in range(26):     # Lv is RM if mid_off else RR (the ring that drives the stepping)
+        if mid_off: seq=posseq(order,windows,N,(0,Lv,0)); RMc=Lv; RRc=Ro
+        else:       seq=posseq(order,windows,N,(0,0,Lv)); RRc=Lv; RMc=Ro
         out=np.empty((V,N),np.int8)
         for t in range(N):
-            L,M,R=seq[t]; oL=(L-RL)%26; oM=(M-RM)%26; oR=(R-RRv)%26; u=(uwin-RU)%26
+            L,M,R=seq[t]; oL=(L-RL)%26; oM=(M-RMc)%26; oR=(R-RRc)%26; u=(uwin-RU)%26
             x=ETWR[int(ct[t])]
             x=(rf[(x+oR)%26]-oR)%26; x=(mf[(x+oM)%26]-oM)%26; x=(lf[(x+oL)%26]-oL)%26
             x=(UKWF[(x+u)%26]-u)%26
@@ -137,8 +139,9 @@ def ioc_worker(task):
         io=(cnt*(cnt-1)).sum(1)/(N*(N-1)); idx=np.argpartition(io,-40)[-40:]
         for i in idx:
             txt=''.join(A[v] for v in out[i])
+            rmv=Lv if mid_off else int(Ro[i]); rrv=int(Ro[i]) if mid_off else Lv
             res.append((float(io[i]),fscore(txt),wiring,'-'.join(order),
-                        (int(RU[i]),int(RL[i]),int(RM[i]),RRv),txt))
+                        (int(RU[i]),int(RL[i]),rmv,rrv),txt))
     res.sort(key=lambda z:(z[1],z[0]),reverse=True); return res[:topk]
 
 # ---- crib mode worker ----

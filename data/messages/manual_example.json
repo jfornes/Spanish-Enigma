@@ -14,5 +14,5 @@
   "note": "El manual/Soler associen el lot A1232-1235 amb wiring C, pero aquest exemple reprodueix amb F (el manual esta anotat K-204). Vector de veritat per validacio.",
   "plaintext": "ENEMIGOCARECEMUNICIONESAPRESAMOSLENRTWTPXKDECANONYNROTPPPPXKFUSILWWW",
   "ciphertext": "RCHBFZZKNVJXTUAYNZKWRUHCHPSXKKWLZMBYNVWVGUMCWZMJVEEPZQXFDWFHRIRRZHXC",
-  "plaintext_note": "68 lletres. Numeros codificats en QWERTZ entre NR/XK: TWTP=5250, OTPPPP=950000; DECANON=DE CANON (N->cap), FUSIL, WWW=farciment. Text: ENEMIGO CARECE MUNICIONES APRESAMOSLE NR 5250 XK DE CANON Y NR 950000 XK FUSIL.",
+  "plaintext_note": "68 lletres. Numeros codificats en QWERTZ entre NR/XK: TWTP=5250, OTPPPP=950000; DECANON=DE CANON (N->cap), FUSIL, WWW=farciment. Text: ENEMIGO CARECE MUNICIONES APRESAMOSLE NR 5250 XK DE CANON Y NR 950000 XK FUSIL."
 }

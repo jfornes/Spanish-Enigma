@@ -184,11 +184,20 @@ def _ioc_init(defs):
 
 
 def _ioc_full_worker(task):
-    """Score every full decode by IoC over the FULL 26^4 ring space. Because the
-    turnover is now core-based ((window-ring)==notch_offset), the window/step sequence
-    depends on the RIGHT ring, so we loop over RR and recompute the sequence for each,
-    vectorising the other 26^3 rings. (When rotors I/II get offset notches, the middle
-    step will also depend on RM -> loop over (RR,RM); for now only III is offset-based.)"""
+    """Score every full decode by IoC over the FULL 26^4 ring space.
+
+    BUGFIX (was: always looped RR, fixed rm=0): the ring that must be swept in
+    the OUTER loop (the one posseq() needs to recompute the step sequence) is
+    whichever SLOT actually carries a core-based (offset) notch right now --
+    that is the rotor sitting in order[1] (middle slot) if IT has a known notch
+    (e.g. III in the middle, as in HUEQ's I-III-II), because then it is the
+    middle wheel's OWN notch -- keyed off RM -- that fires its double-step, not
+    the right wheel's. Only if the middle slot's rotor has no known notch does
+    the right slot's notch (keyed off RR) drive stepping, as before (XMOT's
+    II-I-III: III is in the RIGHT slot, so this is unchanged, RR still swept).
+    The other three rings never affect stepping, only offsets, so they can
+    always be vectorised together over 26^3.
+    """
     import numpy as np
     wiring, order, windows, uwin, ct_list, topk = task
     ct = np.array(ct_list); N = len(ct)
@@ -196,15 +205,21 @@ def _ioc_full_worker(task):
     lf, lr = W[order[0]]; mf, mr = W[order[1]]; rf, rr = W[order[2]]
     g = np.arange(26)
     ETWR = cs.ETWR; ETWF = cs.ETWF; UKWF = cs.UKWF; A = cs.A
-    RU, RL, RM = (z.ravel() for z in np.meshgrid(g, g, g, indexing='ij'))          # 26^3 (U,L,M)
+    mid_notch = cs.NOTCH_OFFSET.get(order[1]) is not None   # middle-slot rotor's own notch known?
+    RU, RL, R2 = (z.ravel() for z in np.meshgrid(g, g, g, indexing='ij'))  # 26^3 vectorised rings
     V = RU.size
     res = []
-    for RRv in range(26):
-        seq = cs.posseq(order, windows, N, (0, 0, RRv))       # right ring = RRv -> offset-based notch
+    for sweep in range(26):
+        if mid_notch:
+            RM = np.full(V, sweep, np.int64); RR = R2       # stepping keyed off RM -> sweep RM
+            seq = cs.posseq(order, windows, N, (0, sweep, 0))
+        else:
+            RM = R2; RR = np.full(V, sweep, np.int64)        # stepping keyed off RR -> sweep RR (as before)
+            seq = cs.posseq(order, windows, N, (0, 0, sweep))
         out = np.empty((V, N), np.int8)
         for t in range(N):
             L, M, R = seq[t]
-            oL = (L - RL) % 26; oM = (M - RM) % 26; oR = (R - RRv) % 26; u = (uwin - RU) % 26
+            oL = (L - RL) % 26; oM = (M - RM) % 26; oR = (R - RR) % 26; u = (uwin - RU) % 26
             x = ETWR[int(ct[t])]
             x = (rf[(x + oR) % 26] - oR) % 26; x = (mf[(x + oM) % 26] - oM) % 26; x = (lf[(x + oL) % 26] - oL) % 26
             x = (UKWF[(x + u) % 26] - u) % 26
@@ -218,7 +233,7 @@ def _ioc_full_worker(task):
         for i in idx:
             txt = ''.join(A[v] for v in out[i])
             res.append((float(io[i]), cs.fscore(txt), wiring, '-'.join(order),
-                        (int(RU[i]), int(RL[i]), int(RM[i]), RRv), txt))
+                        (int(RU[i]), int(RL[i]), int(RM[i]), int(RR[i])), txt))
     res.sort(key=lambda z: (z[1], z[0]), reverse=True); return res[:topk]
 
 
@@ -307,3 +322,5 @@ if __name__ == "__main__":
         run(a.message, load_cribs(a.crib), a.procs, all_arr=(a.arr == "all"), mix=a.mix, min_crib=a.min_crib)
     else:
         ioc_run(a.message, a.procs, all_arr=(a.arr == "all"), mix=a.mix, topk=a.top, consensus=a.consensus)
+
+

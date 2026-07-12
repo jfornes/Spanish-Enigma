@@ -1,0 +1,31 @@
+{
+  "archive": "WEIERUD",
+  "signature": "Manual Enigma Sarmiento (transcripció HTML + PDF)",
+  "date_transmission": "1936-11",
+  "date_interception": null,
+  "sender": "Sarmiento (exemple pedagògic del manual, no és una transmissió real)",
+  "recipient": "n/a",
+  "header": null,
+  "grundstellung": "MNAS",
+  "body": "RCHB FZZK NVJX TUAY NZKW RUHC HPSX KKWL ZMBY NVWV GUMC WZMJ VEEP ZQXF DWFH RIRR ZHXC",
+  "garble_check": null,
+  "reference": null,
+  "classification": "manual_worked_example",
+  "ic": 0.0404,
+  "n": 68,
+  "source_type": "manual_worked_example",
+  "notes": "Exemple xifrat íntegrament treballat al manual de Sarmiento (Salamanca, novembre de 1936), reproduït per Soler Fuensanta i López-Brea Espiau a l'Apèndix V de 'Soldados sin rostro' i digitalitzat per Frode Weierud. NO és un missatge interceptat real: no porta capçalera de 4 grups ni grup de verificació (garble check) al final, perquè el manual només il·lustra les operacions de xifrat sobre un text triat pel mateix Sarmiento, sense el protocol indicador complet que sí que segueixen els missatges reals de la Caja 745 (XMOT, LUIS, DHZB, MKCX). Per això 'header' i 'garble_check' són null aquí. El manual/Soler associen el lot de màquines A1232-1235 (a les quals correspon aquest manual, anotat a mà 'K-204') amb el cablejat C; empíricament, però, l'exemple reprodueix amb el cablejat F (66/68 lletres), no amb C (que no ha estat mai recuperat i per tant no es pot provar). Les 2 discrepàncies (posicions 36 i 64, 1-indexed) són AÏLLADES —no arrossega cap tram posterior— i per tant invariants sota qualsevol offset de notch: no són un problema d'stepping sinó, versemblantment, un error de càlcul a mà del 1936 o de transcripció del document. Amb el cablejat D l'encaix és d'atzar (1-2/68). Aquest missatge, a més, NO permet pinar cap notch al nucli: el rotor II (esquerra) no avança mai dins d'aquest text, de manera que el III (mig) no arriba mai al seu propi notch; i a l'anell d'aquest exemple (ringR=R=17) un hipotètic notch al nucli del rotor I d'offset 7(=H) seria matemàticament indistingible del turnover per finestra (WIN['I']=Y; (Y-R) mod 26 = 7) — per això serveix com a vector de validació general de la màquina i del cablejat F, però no decideix window-vs-core per al rotor I.",
+  "found_by": "Frode Weierud (PDF del manual + transcripció HTML)",
+  "solution": {
+    "wiring": "F",
+    "rotor_order": "II-III-I",
+    "windows_ULMR": "MNAS",
+    "ringstellung_ULMR": "QDRR",
+    "plaintext": "ENEMIGOCARECEMUNICIONESAPRESAMOSLENRTWTPXKDECANONYNROTPPPPXKFUSILWWW",
+    "reading": "ENEMIGO CARECE MUNICIONES APRESAMOSLE NR 5250 XK DE CAÑON Y NR 950000 XK FUSIL",
+    "recovered_by": "text pla i xifrat donats pel manual mateix (Weierud); verificat amb el simulador (toolkit) que el cablejat F els reprodueix a 66/68 amb l'ETW QWERTZ orientada correctament",
+    "command": "python3 python/corpus_sweep.py data/messages/MNAS.json --crib ENEMIGOCARECEMUNICIONES --wirings F --all",
+    "solved_date": "2026-07-08",
+    "notes": "Match 66/68 contra el text pla del manual: les 2 discrepàncies (pos. 36, 64) són anomalies de dades aïllades, no d'stepping. Vector de validació de referència del projecte (confirma orientació ETW QWERTZ i atribució de cablejat F per a aquest lot de màquines). Els valors windows_ULMR=MNAS i ringstellung_ULMR=QDRR són els LITERALS que dona Sarmiento (combinació de tambors 0,1,2,3 d'esquerra a dreta, la mateixa convenció per a les dues operacions), no una convenció inferida per nosaltres. La comanda de reproducció (--all) pot retornar una etiqueta diferent però equivalent (p. ex. windows AMNS/ring ECER): l'Enigma té una llibertat de gauge per rotor —namés l'offset (finestra−anell) mod 26 és invariant—, i els dos etiquetatges tenen exactament els mateixos 4 offsets (22,10,9,1 per U,L,M,R) i produeixen el mateix desxifrat. No és una contradicció amb els valors literals del manual, només una relabelació vàlida."
+  }
+}

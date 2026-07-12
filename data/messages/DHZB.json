@@ -19,12 +19,14 @@
   "ic": 0.0402,
   "n": 84,
   "source_type": "typed_intercept",
-  "notes": "nr 69 'el 7 a las 01.40' Repetition of an earlier message ('Me refiero a error en YPSQ VHRH DHZB NWTC') — the 4-group indicator is quoted in clear, reusing Grundstellung DHZB. ACTIONABLE: locate the original message with this same header for a depth pair. DHZB is the Grundstellung whose wiring-F or D brute force failed; retry with wiring C?",
+  "notes": "nr 69 'el 7 a las 01.40' Repetition of an earlier message ('Me refiero a error en YPSQ VHRH DHZB NWTC') — the 4-group indicator is quoted in clear, reusing Grundstellung DHZB. No crib known -> IoC-blind only, no crib-drag possible. DHZB is the Grundstellung whose wiring-F or D brute force failed (pure and mixed, all 24 arrangements, full 26^4 ring sweep, twice reproduced). True wiring C is NOT reconstructed (unknown rotor permutations), so 'consistent with wiring C' means only 'not D, not F, not a D/F mix' — it is not a positive identification of C.",
   "found_by": "Jordi Fornés",
   "status": {
     "solved": false,
-    "assessment": "No desxifra amb D ni F, ni pur ni barrejat (escombrada IoC exhaustiva 26^4). Grund confirmat (garble_check = grund invertit). Es un re-enviament marcat per error ('Me refiero a error en YPSQ VHRH DHZB NWTC'); l'explicacio mes senzilla (Occam) es que el criptograma esta corromput (F rebut malament), no un cablejat diferent, pero cal pensar en d'altres possibilitats.",
-    "checked_with": "python3 python/mixed_rotors.py data/messages/DHZB.json --mix --arr all --procs 12",
-    "checked_date": "2026-07-08"
+    "assessment": "No desxifra amb D ni F, ni pur ni barrejat (escombrada IoC exhaustiva 26^4, 24 arranjaments x 8 combinacions D/F, reproduida identica dues vegades: 2026-07-08 i re-confirmada amb kernel C actualitzat). Grund confirmat (garble_check = grund invertit). Es un re-enviament marcat per error ('Me refiero a error en YPSQ VHRH DHZB NWTC'); l'explicacio mes senzilla (Occam) segueix sent que el criptograma esta corromput (F rebut malament) en lloc d'un cablejat C genui, pero cap de les dues hipotesis es pot confirmar sense mes dades: no hi ha crib conegut per intentar buttoning-up, i cap altre missatge candidat a C (fora de MVNR, encara sense trencar) permet contrastar-ho.",
+    "checked_with": "python3 python/mixed_rotors.py data/messages/DHZB.json --mix --arr all --procs 8",
+    "checked_date": "2026-07-13",
+    "methodology_note": "Aquest camí (IoC-blind, mixed_rotors.py --mix --arr all) usa el worker Python _ioc_full_worker, que ja tractava correctament el notch al mig (rM recorregut quan el rotor central te core-notch) des d'una sessio anterior a la comprovacio original de 2026-07-08. El fix del bug analeg 'rm=0' al kernel C (sessio 2026-07-12/13) NO afecta aquest resultat -- nomes afectaria un futur atac per crib-drag en C, que DHZB no admet perque no te crib conegut. Aquesta execucio es, doncs, una reconfirmacio de reproductibilitat amb el mateix resultat, no cobertura nova.",
+    "does_not_provide": "No aporta un segon missatge per confirmar notch_offset del rotor II (nu=15, encara amb un sol missatge, MKCX) ni per decidir el rotor I (window vs core), perque no hi ha hagut trencament."
   }
 }

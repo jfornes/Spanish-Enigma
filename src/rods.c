@@ -128,33 +128,40 @@ static void *worker(void *p){
         int oi=q%6; int ai=q/6;
         int Lw=c->grund[c->arr[ai][0]], Mw=c->grund[c->arr[ai][1]], Rw=c->grund[c->arr[ai][2]];
         int wL=ORDERS[oi][0], wM=ORDERS[oi][1], wR=ORDERS[oi][2];
+        int midnotch = (c->notch[wM] >= 0);   /* middle steps on (window-ringM)==notch -> seq depends on rM */
         for (int rR=0;rR<AL;rR++){
-            posseq_off(Lw,Mw,Rw,c->turn[wM],c->turn[wR],c->notch[wM],c->notch[wR],0,rR,upto,Lp,Mp,Rp);
-            for (int rL=0;rL<AL;rL++)
+            /* rR-only turnover (window-based middle): the step sequence is rM-independent,
+             * so build it once here. When the middle has a core notch we rebuild per rM below. */
+            if (!midnotch)
+                posseq_off(Lw,Mw,Rw,c->turn[wM],c->turn[wR],c->notch[wM],c->notch[wR],0,rR,upto,Lp,Mp,Rp);
             for (int rM=0;rM<AL;rM++){
-                int ok=1;
-                for (int j=0;j<c->crib_len;j++){
-                    int t=c->crib_off+j;
-                    int oR=modp(Rp[t]-rR), oM=modp(Mp[t]-rM), oL=modp(Lp[t]-rL);
-                    int x=c->etwr[c->cipher[t]];
-                    x=c->rodfwd[wR][oR][x];
-                    x=c->rodfwd[wM][oM][x];
-                    x=c->rodfwd[wL][oL][x];
-                    x=c->ukwat[u][x];
-                    x=c->rodrev[wL][oL][x];
-                    x=c->rodrev[wM][oM][x];
-                    x=c->rodrev[wR][oR][x];
-                    x=c->etwf[x];
-                    if (x!=c->crib[j]){ ok=0; break; }     /* contradiction -> abandon */
-                }
-                if (ok){                                    /* zero contradictions: a hit */
-                    pthread_mutex_lock(&c->lock);
-                    if (c->nhits<c->max_hits){
-                        int *o=c->out+c->nhits*6;
-                        o[0]=ai; o[1]=oi; o[2]=u; o[3]=rL; o[4]=rM; o[5]=rR;
-                        c->nhits++;
+                if (midnotch)
+                    posseq_off(Lw,Mw,Rw,c->turn[wM],c->turn[wR],c->notch[wM],c->notch[wR],rM,rR,upto,Lp,Mp,Rp);
+                for (int rL=0;rL<AL;rL++){
+                    int ok=1;
+                    for (int j=0;j<c->crib_len;j++){
+                        int t=c->crib_off+j;
+                        int oR=modp(Rp[t]-rR), oM=modp(Mp[t]-rM), oL=modp(Lp[t]-rL);
+                        int x=c->etwr[c->cipher[t]];
+                        x=c->rodfwd[wR][oR][x];
+                        x=c->rodfwd[wM][oM][x];
+                        x=c->rodfwd[wL][oL][x];
+                        x=c->ukwat[u][x];
+                        x=c->rodrev[wL][oL][x];
+                        x=c->rodrev[wM][oM][x];
+                        x=c->rodrev[wR][oR][x];
+                        x=c->etwf[x];
+                        if (x!=c->crib[j]){ ok=0; break; }     /* contradiction -> abandon */
                     }
-                    pthread_mutex_unlock(&c->lock);
+                    if (ok){                                    /* zero contradictions: a hit */
+                        pthread_mutex_lock(&c->lock);
+                        if (c->nhits<c->max_hits){
+                            int *o=c->out+c->nhits*6;
+                            o[0]=ai; o[1]=oi; o[2]=u; o[3]=rL; o[4]=rM; o[5]=rR;
+                            c->nhits++;
+                        }
+                        pthread_mutex_unlock(&c->lock);
+                    }
                 }
             }
         }
@@ -227,24 +234,36 @@ static void *cworker(void *p){
         int Lw=c->grund[c->arr[ai][0]], Mw=c->grund[c->arr[ai][1]], Rw=c->grund[c->arr[ai][2]];
         int wL=ORDERS[oi][0], wM=ORDERS[oi][1], wR=ORDERS[oi][2];
         (void)wL;
-        posseq_off(Lw,Mw,Rw,c->turn[wM],c->turn[wR],c->notch[wM],c->notch[wR],0,ringR,upto,Lp,Mp,Rp);
-        int pair[AL]; for (int i=0;i<AL;i++) pair[i]=-1;
-        int prevM=Mp[c->crib_off], prevL=Lp[c->crib_off], ok=1;
-        for (int j=0;j<c->crib_len;j++){
-            int t=c->crib_off+j;
-            if (Mp[t]!=prevM || Lp[t]!=prevL){        /* new stretch -> new coupling */
-                for (int i=0;i<AL;i++) pair[i]=-1;
-                prevM=Mp[t]; prevL=Lp[t];
+        /* The per-stretch coupling folds M/L/UKW away and needs only ringR -- UNLESS the
+         * middle wheel has a core notch, in which case the stretch boundaries (where M
+         * steps) depend on ringM, which this filter does not report. We then accept the
+         * (arr,order,ringR) if SOME ringM keeps every stretch consistent (existential rM).
+         * Reading a hit for a core-notch middle must use the link method, not this one. */
+        int midnotch = (c->notch[wM] >= 0);
+        int hit=0;
+        for (int rM=0; rM<AL && !hit; rM++){
+            posseq_off(Lw,Mw,Rw,c->turn[wM],c->turn[wR],c->notch[wM],c->notch[wR],
+                       midnotch?rM:0,ringR,upto,Lp,Mp,Rp);
+            int pair[AL]; for (int i=0;i<AL;i++) pair[i]=-1;
+            int prevM=Mp[c->crib_off], prevL=Lp[c->crib_off], ok=1;
+            for (int j=0;j<c->crib_len;j++){
+                int t=c->crib_off+j;
+                if (Mp[t]!=prevM || Lp[t]!=prevL){        /* new stretch -> new coupling */
+                    for (int i=0;i<AL;i++) pair[i]=-1;
+                    prevM=Mp[t]; prevL=Lp[t];
+                }
+                int rho=modp(Rp[t]-ringR);
+                int a=c->rodfwd[wR][rho][ c->etwr[ c->crib[j] ] ];
+                int b=c->rodfwd[wR][rho][ c->etwr[ c->cipher[t] ] ];
+                if (a==b){ ok=0; break; }                 /* fixed point: impossible */
+                if (pair[a]==-1 && pair[b]==-1){ pair[a]=b; pair[b]=a; }
+                else if (pair[a]==b){ /* click: already consistent */ }
+                else { ok=0; break; }                     /* conflicting pairing */
             }
-            int rho=modp(Rp[t]-ringR);
-            int a=c->rodfwd[wR][rho][ c->etwr[ c->crib[j] ] ];
-            int b=c->rodfwd[wR][rho][ c->etwr[ c->cipher[t] ] ];
-            if (a==b){ ok=0; break; }                 /* fixed point: impossible */
-            if (pair[a]==-1 && pair[b]==-1){ pair[a]=b; pair[b]=a; }
-            else if (pair[a]==b){ /* click: already consistent */ }
-            else { ok=0; break; }                     /* conflicting pairing */
+            if (ok) hit=1;
+            if (!midnotch) break;   /* rM irrelevant: a single pass decides */
         }
-        if (ok){
+        if (hit){
             pthread_mutex_lock(&c->lock);
             if (c->nhits<c->max_hits){
                 int *o=c->out+c->nhits*3; o[0]=ai; o[1]=oi; o[2]=ringR; c->nhits++;
@@ -309,6 +328,8 @@ static void *lworker(void *p){
         int oi=q%6; int ai=q/6;
         int Lw=c->grund[c->arr[ai][0]], Mw=c->grund[c->arr[ai][1]], Rw=c->grund[c->arr[ai][2]];
         int wM=ORDERS[oi][1], wR=ORDERS[oi][2];
+        /* rM is enumerated in the outer index and passed through, so a core-notch middle
+         * (stepping depends on ringM) is handled correctly here -- no rm=0 bug in lworker. */
         posseq_off(Lw,Mw,Rw,c->turn[wM],c->turn[wR],c->notch[wM],c->notch[wR],rM,rR,upto,Lp,Mp,Rp);
         for (int i=0;i<AL;i++) for (int k=0;k<AL;k++) P[i][k]=-1;
         int ok=1;
@@ -379,37 +400,42 @@ static void *worker_sweep(void *p){
             int Lw=c->grund[c->arr[ai][0]], Mw=c->grund[c->arr[ai][1]], Rw=c->grund[c->arr[ai][2]];
             for (int oi=0; oi<6; oi++){
                 int wL=ORDERS[oi][0], wM=ORDERS[oi][1], wR=ORDERS[oi][2];
+                int midnotch = (c->notch[wM] >= 0);   /* middle steps on (window-ringM)==notch -> seq depends on rM */
                 for (int rR=0;rR<AL;rR++){
-                    /* core-based turnover depends on rR -> recompute the step sequence per rR.
-                     * (rM passed as 0: the middle notch is window-based for I/II; when a middle
-                     * rotor gets an offset notch, move this inside the rM loop too.) */
-                    posseq_off(Lw,Mw,Rw,c->turn[wM],c->turn[wR],c->notch[wM],c->notch[wR],0,rR,upto,Lp,Mp,Rp);
-                    for (int u=0;u<AL;u++)
-                    for (int rL=0;rL<AL;rL++)
+                    /* Core-based turnover depends on rR -> the step sequence is rebuilt per rR.
+                     * When the middle wheel has a core notch it ALSO depends on rM, so rebuild
+                     * inside the rM loop; otherwise (window-based middle) build once here. */
+                    if (!midnotch)
+                        posseq_off(Lw,Mw,Rw,c->turn[wM],c->turn[wR],c->notch[wM],c->notch[wR],0,rR,upto,Lp,Mp,Rp);
                     for (int rM=0;rM<AL;rM++){
-                        int ok=1;
-                        for (int j=0;j<c->crib_len;j++){
-                            int t=co+j;
-                            int oR=modp(Rp[t]-rR), oM=modp(Mp[t]-rM), oL=modp(Lp[t]-rL);
-                            int x=c->etwr[c->cipher[t]];
-                            x=c->rodfwd[wR][oR][x];
-                            x=c->rodfwd[wM][oM][x];
-                            x=c->rodfwd[wL][oL][x];
-                            x=c->ukwat[u][x];
-                            x=c->rodrev[wL][oL][x];
-                            x=c->rodrev[wM][oM][x];
-                            x=c->rodrev[wR][oR][x];
-                            x=c->etwf[x];
-                            if (x!=c->crib[j]){ ok=0; break; }
-                        }
-                        if (ok){
-                            pthread_mutex_lock(&c->lock);
-                            if (c->nhits<c->max_hits){
-                                int *o=c->out+c->nhits*7;
-                                o[0]=co; o[1]=ai; o[2]=oi; o[3]=u; o[4]=rL; o[5]=rM; o[6]=rR;
-                                c->nhits++;
+                        if (midnotch)
+                            posseq_off(Lw,Mw,Rw,c->turn[wM],c->turn[wR],c->notch[wM],c->notch[wR],rM,rR,upto,Lp,Mp,Rp);
+                        for (int u=0;u<AL;u++)
+                        for (int rL=0;rL<AL;rL++){
+                            int ok=1;
+                            for (int j=0;j<c->crib_len;j++){
+                                int t=co+j;
+                                int oR=modp(Rp[t]-rR), oM=modp(Mp[t]-rM), oL=modp(Lp[t]-rL);
+                                int x=c->etwr[c->cipher[t]];
+                                x=c->rodfwd[wR][oR][x];
+                                x=c->rodfwd[wM][oM][x];
+                                x=c->rodfwd[wL][oL][x];
+                                x=c->ukwat[u][x];
+                                x=c->rodrev[wL][oL][x];
+                                x=c->rodrev[wM][oM][x];
+                                x=c->rodrev[wR][oR][x];
+                                x=c->etwf[x];
+                                if (x!=c->crib[j]){ ok=0; break; }
                             }
-                            pthread_mutex_unlock(&c->lock);
+                            if (ok){
+                                pthread_mutex_lock(&c->lock);
+                                if (c->nhits<c->max_hits){
+                                    int *o=c->out+c->nhits*7;
+                                    o[0]=co; o[1]=ai; o[2]=oi; o[3]=u; o[4]=rL; o[5]=rM; o[6]=rR;
+                                    c->nhits++;
+                                }
+                                pthread_mutex_unlock(&c->lock);
+                            }
                         }
                     }
                 }

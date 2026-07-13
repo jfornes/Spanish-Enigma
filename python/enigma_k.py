@@ -41,9 +41,9 @@ NOTCH
   Core-notch offsets come from corpus_sweep.NOTCH_OFFSET (turnover fires when
   (window - ring) % 26 == offset). Any wheel left at None falls back to the legacy
   window-letter turnover from wirings.json. Override per run without touching the
-  library, e.g. a calibrated (unpublished) value for II:
-      --notch II=15
-      --notch II=15,I=7
+  library, e.g. a calibrated (unpublished) value for some wheel W:
+      --notch W=OFFSET
+      --notch W=OFFSET,X=OFFSET2
       --notch none          (force legacy window turnovers for every wheel)
 
 USAGE
@@ -57,7 +57,8 @@ USAGE
 
     # run a message JSON straight from data/messages/ (uses its own solution block if present)
     python3 enigma_k.py --json data/messages/XMOT.json
-    python3 enigma_k.py --json data/messages/MKCX.json --notch II=15
+    python3 enigma_k.py --json data/messages/MKCX.json --notch II=OFFSET   # II rides right in MKCX;
+                                                                            # needs its core-notch offset to step correctly
 
     # override any part of the stored key
     python3 enigma_k.py --json data/messages/LUIS.json --ring BWEV
@@ -99,7 +100,7 @@ def parse_order(s):
 
 
 def apply_notch(spec):
-    """--notch II=15,I=7  |  --notch none"""
+    """--notch W=OFFSET[,W2=OFFSET2...]  |  --notch none"""
     if not spec:
         return
     if spec.strip().lower() == 'none':
@@ -110,7 +111,7 @@ def apply_notch(spec):
         wheel, _, val = part.partition('=')
         wheel = wheel.strip().upper()
         if wheel not in ('I', 'II', 'III') or not val.strip().isdigit():
-            sys.exit(f"error: --notch wants WHEEL=OFFSET, e.g. II=15 (got {part!r})")
+            sys.exit(f"error: --notch wants WHEEL=OFFSET, e.g. III=22 (got {part!r})")
         cs.NOTCH_OFFSET[wheel] = int(val) % 26
 
 
@@ -161,10 +162,9 @@ def self_test(path):
             print(f"  skip  {k['label']:<14} (no complete solution block)"); skip += 1; continue
         order = parse_order(k['order'])
         win = k['windows'] or (k['grund'][-1] + k['grund'][:-1])
-        # MKCX/HUEQ carry II on the right: needs the calibrated II offset to step correctly
-        cs.NOTCH_OFFSET.update(saved)
-        if order[2] == 'II' and cs.NOTCH_OFFSET.get('II') is None:
-            cs.NOTCH_OFFSET['II'] = 15          # provisional calibration, not in wirings.json
+        cs.NOTCH_OFFSET.update(saved)   # None stays None here: legacy window turnover is the
+                                          # documented default, not a defect -- pass --notch
+                                          # yourself for messages that need a calibrated wheel.
         got = run(k['wiring'], order, win, k['ring'], clean(k['body']))
         exp = clean(k['plain'])
         n = min(len(got), len(exp))
@@ -197,7 +197,7 @@ def main():
     p.add_argument('--windows', help="4 letters, ULMR")
     p.add_argument('--grund', help="4 letters as transmitted (LMRU); rotated to give windows")
     p.add_argument('--ring', help="Ringstellung, 4 letters, ULMR")
-    p.add_argument('--notch', help="core-notch override, e.g. 'II=15' or 'none'")
+    p.add_argument('--notch', help="core-notch override, e.g. 'III=22' or 'none'")
     p.add_argument('--groups', type=int, default=4, help="output group size (default 4; 0 = no grouping)")
     p.add_argument('--raw', action='store_true', help="print the output only, ungrouped")
     p.add_argument('--self-test', metavar='PATH', help="verify against solved messages and exit")

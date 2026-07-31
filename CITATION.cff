@@ -20,6 +20,7 @@ authors:
   - family-names: Rebull
     given-names: Alba
     affiliation: Universitat Politècnica de Catalunya (UPC-BarcelonaTech)
+    orcid: 'https://orcid.org/0009-0005-7979-4636'
 version: 1.0.0
 date-released: '2026-07-05'
 license: GPL-3.0-or-later

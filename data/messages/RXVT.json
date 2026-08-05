@@ -1,0 +1,27 @@
+[
+  {
+    "archive": "CDMH",
+    "signature": "Caja 745",
+    "date_transmission": "1936-12-05/06 (sense data pròpia en aquest full; els altres 4 missatges del mateix full són del 5 i 6 de desembre)",
+    "date_interception": null,
+    "sender": "Cuartel General (Salamanca)",
+    "recipient": "Comandante militar, Estado Mayor (adreça incompleta a l'original: 'faltan algunas palabras en la dirección')",
+    "header": ["BHNN", "DOCH", "RXVT", "HEAP"],
+    "grundstellung": "RXVT",
+    "body": "NIRA BARQ FIRE EARY CGQM EHEX EGZJ RMIS CACA DOFM ZOBT ASIE YGCJ RMIO WOHC POSI NUNI MVEC",
+    "garble_check": null,
+    "reference": "Ref [il·legible] y 22 (transcrit 'REFAD Y 22'; la imatge no es llegeix bé en aquest punt)",
+    "classification": "enigma_k_candidate",
+    "ic": 0.0481,
+    "n": 72,
+    "source_type": "typed_intercept_low_quality_scan",
+    "notes": "Lectura ALTERNATIVA del mateix intercept que CEVM.json (mateix full, capsa 745, 5 missatges, aquest n'es l'unic candidat Enigma). Hipotesi de Jordi Fornes: la seqüencia 'RXVT HEAP' apareixia repetida ('RXVT HEAP EXVT HEAP' a la transcripcio original de CEVM.json, on 'EXVT' era probablement una mala lectura de 'RXVT' per la baixa qualitat de la imatge); es tracta del FINAL de la capçalera (4 grups: BHNN DOCH RXVT HEAP), amb el patro habitual (3r grup = Grundstellung) -> Grundstellung = RXVT. S'ha esborrat la repeticio (un dels dos 'RXVT HEAP'), assumida com artefacte de retransmissio, igual que a ZXNE/RALU i XMOT/FAEQ-LHDF. Com amb LAHP.json (hipotesi alternativa de ZXNE), aquesta lectura NO te confirmacio per inversio: revers(RXVT)='TVXR', que no coincideix amb el darrer grup del cos (MVEC). Per tant es una hipotesi estructural (capcalera visible de 4 grups, patro tipic) pero sense el suport addicional del garble check. Cos analitzat = tot despres de la capcalera (NIRA...MVEC), sense cap grup descartat com a garble check: n=72, IC=0.0481. Igual que a CEVM.json, la transcripcio prove d'una imatge de qualitat molt baixa i caldria confirmar-la contra l'original.",
+    "found_by": "Jordi Fornés",
+    "status": {
+      "solved": false,
+      "assessment": "Pendent d'executar.",
+      "checked_with": null,
+      "checked_date": null
+    }
+  }
+]

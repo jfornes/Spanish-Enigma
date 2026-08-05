@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-calibrate_notch2.py -- brute-force a candidate core-notch offset for ONE wheel
+calibrate_notch.py -- brute-force a candidate core-notch offset for ONE wheel
 (default: II), jointly with the ring space that its stepping actually depends
 on, optionally across ALL 24 indicator arrangements and/or several orders/wirings.
 
@@ -20,13 +20,13 @@ the 24 arrangements (24x heavier -- budget a few minutes with --procs 12+).
 
 Usage:
     # canonical arrangement only, calibrate II's notch, order/wiring already known:
-    python3 calibrate_notch2.py MSG.json --procs 12
+    python3 calibrate_notch.py MSG.json --procs 12
 
     # also sweep all 24 arrangements (the next thing to try for MKCX):
-    python3 calibrate_notch2.py MSG.json --arr all --procs 12
+    python3 calibrate_notch.py MSG.json --arr all --procs 12
 
     # generalise to another message/order/wiring/wheel:
-    python3 calibrate_notch2.py MSG.json --wiring D,F --order all --notch-wheel I --arr all --procs 12
+    python3 calibrate_notch.py MSG.json --wiring D,F --order all --notch-wheel I --arr all --procs 12
 """
 import json, argparse, itertools, multiprocessing as mp
 import numpy as np

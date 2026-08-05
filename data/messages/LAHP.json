@@ -1,0 +1,28 @@
+[
+  {
+    "archive": "CDMH",
+    "signature": "Caja 745",
+    "date_transmission": "1936-12-14",
+    "date_interception": "1936-12-14",
+    "sender": "Estación de Palma de Mallorca (bàndol nacional)",
+    "recipient": null,
+    "header": ["LERA", "QBJO", "LAHP", "JQOR"],
+    "grundstellung": "LAHP",
+    "body": "OREG AEAL PFAU RTAPO RALU LARK ICEB MCZH BEHT PNIK LBTH ENXZ",
+    "garble_check": null,
+    "reference": "Ref: 32 y 24",
+    "classification": "enigma_k_candidate",
+    "ic": 0.0476,
+    "n": 49,
+    "source_type": "typed_intercept",
+    "notes": "Lectura ALTERNATIVA del mateix intercept que ZXNE.json (mateixa capsa/full, capsa 745, 14-12-36). Aqui s'assumeix que SI hi ha capcalera de 4 grups (LERA QBJO LAHP JQOR), amb el patro habitual (3r grup = Grundstellung) que si es compleix a XMOT/DHZB/LUIS: Grundstellung = LAHP. A diferencia d'aquells missatges, PERO, no hi ha grup de verificacio (garble check) confirmat al final: revers(LAHP)='PHAL', que no coincideix amb el darrer grup transcrit (ENXZ). Per tant aquesta hipotesi NO te la confirmacio interna per inversio que si tenen els altres missatges (ni que te ZXNE.json, on el revers d'ENXZ dona exactament ZXNE): es una hipotesi purament posicional/estructural, mes feble evidencialment que ZXNE en aquest sentit, encara que estructuralment mes 'tipica' (capcalera visible de 4 grups, com als missatges ja confirmats). S'ha mantingut la mateixa suposicio de RALU duplicat (retransmissio) que a ZXNE.json, aplicada aqui igualment. Cos analitzat = tot el que segueix la capcalera (OREG...ENXZ), SENSE cap grup final descartat com a garble check (no n'hi ha cap de confirmat): n=49, IC=0.0476 (mes a prop de la banda Enigma que ZXNE pero amb mostra mes petita). Si aquesta hipotesi tampoc trenca amb D/F, s'afegeix com a quart resultat negatiu (junt amb DHZB, ZXNE, MVNR) pero amb una lectura de missatge diferent, no necessariament additiu a la llista de 'candidats a C' perque es la MATEIXA font que ZXNE amb una altra segmentacio, no un intercept independent.",
+    "found_by": "Jordi Fornés",
+    "status": {
+      "solved": false,
+      "assessment": "Pendent d'executar. Provar primer nomes D i F purs (mes rapid) abans de la barreja completa, ja que es una hipotesi secundaria de la mateixa font que ZXNE.",
+      "checked_with": null,
+      "checked_date": null
+    }
+  }
+]
+

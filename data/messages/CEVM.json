@@ -1,0 +1,27 @@
+[
+  {
+    "archive": "CDMH",
+    "signature": "Caja 745",
+    "date_transmission": "1936-12-05/06 (sense data pròpia en aquest full; els altres 4 missatges del mateix full són del 5 i 6 de desembre)",
+    "date_interception": null,
+    "sender": "Cuartel General (Salamanca)",
+    "recipient": "Comandante militar, Estado Mayor (adreça incompleta a l'original: 'faltan algunas palabras en la dirección')",
+    "header": null,
+    "grundstellung": "CEVM",
+    "body": "BHNN DOCH RXVT HEAP EXVT HEAP NIRA BARQ FIRE EARY CGQM EHEX EGZJ RMIS CACA DOFM ZOBT ASIE YGCJ RMIO WOHC POSI NUNI MVEC",
+    "garble_check": "MVEC",
+    "reference": "Ref [il·legible] y 22 (transcrit 'REFAD Y 22'; la imatge no es llegeix bé en aquest punt)",
+    "classification": "enigma_k_candidate",
+    "ic": 0.0459,
+    "n": 92,
+    "source_type": "typed_intercept_low_quality_scan",
+    "notes": "Full amb 5 missatges: (1) Palma-Burgos, Banco de España, existencias en caixa -- en clar, no Enigma; (2) AQUEST missatge, 'Circular' de Cuartel General (Salamanca) -- únic candidat Enigma del full; (3) d'Àvila, tren amb pres -- en clar; (4) d'una 'estacion facciosa', plus de rancho -- en clar; (5) vaixell de guerra italià I.A.Q.C., grups NUMERICS de 5 xifres -- codi, no Enigma, mateixa família que el codi naval DEI ja documentat (NARA.DEInumeric1937). Transcripció feta sobre una imatge de qualitat molt baixa (avisat per Jordi Fornés, 'no es veu gens bé'): cal revisió contra l'original abans de donar-la per definitiva. Marcada explícitament com a INCERTA la seqüencia 'RXVT HEAP EXVT HEAP NIRA': 'HEAP' apareix dues vegades separat per 'EXVT', un patró que podria ser un artefacte de retransmissió (com 'FAEQ LHDF FAEQ LHDF' a XMOT o 'RALU RALU' a ZXNE) però que NO s'ha suprimit ni corregit aquí perquè, a diferència d'aquells dos casos, la imatge no permet confirmar-ho amb prou seguretat; es manté tal com es transcriu i caldria contrastar-la amb l'original o amb una còpia de més qualitat. Sense capçalera de 4 grups separada -> 'header' es null. Grundstellung CEVM es NOMES la hipotesi de l'ultim grup (MVEC) invertit, seguint la mateixa convencio garble-check que als altres missatges (no una lectura directa d'un tercer grup de capcalera). IC=0.0459 (n=92, despres de treure el grup final) es troba una mica per sobre pero prop de la banda Enigma esperada (~0.038-0.042); amb n=92 es una mostra mes gran que ZXNE (n=61) i per tant una mica mes fiable, tot i no ser concloent per si sola.",
+    "found_by": "Jordi Fornés",
+    "status": {
+      "solved": false,
+      "assessment": "Encara no intentat. Primer pas recomanat: escombrada IoC-blind amb D i F (pur i barrejat), com amb ZXNE i DHZB. Donada la incertesa de transcripcio (imatge de baixa qualitat, sequencia HEAP...HEAP dubtosa), un resultat negatiu no es tan informatiu com als altres missatges: convindria revisar la transcripcio abans de descartar cablejats a partir d'aquest missatge.",
+      "checked_with": null,
+      "checked_date": null
+    }
+  }
+]

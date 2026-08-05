@@ -49,15 +49,24 @@ support reproducible analysis of a corpus that is still largely unpublished.
 ```
 spanish-enigma/
 ├── data/
-│   ├── wirings/       wirings.json        # ETW, UKW, rotor sets, wiring variants + sources
-│   ├── frequencies/                       # IC reference profiles (in progress)
-│   ├── messages/      *.json              # intercepted ciphertexts with archival metadata
-│   └── serials/       machine_registry.json + README   # machine/station registry
-├── src/              rods.c, Makefile     # C search engine (librods.so / .dylib)
-├── python/           rodslib.py, rods_frontend.py, corpus_sweep.py,
-│                     message_eval.py, buttonup.py
-├── tests/                                 # (in progress)
-└── doc/                                   # (in progress)
+│   ├── wirings/    wirings.json        # ETW, UKW, rotor sets, wiring variants + sources
+│   ├── messages/   *.json              # intercepted ciphertexts with archival metadata
+│   ├── cribs/      *.txt               # probable-word catalogues
+│   └── serials/    machine_registry.json + README   # machine/station registry
+├── src/            rods.c, Makefile    # C search engine (librods.so / .dylib)
+├── python/         enigma_k.py         # the machine itself (simulator / reference oracle)
+│                   rodslib.py          # loader for the C library
+│                   corpus_sweep.py     # IoC triage + crib-drag
+│                   rods_frontend.py    # rodding, couplings, linking
+│                   buttonup.py         # rotor-wiring recovery (Knox buttoning-up)
+│                   calibrate_notch.py  # core-notch offset calibration
+│                   mixed_rotors.py     # rotors drawn from different wiring sets
+│                   message_eval.py     # archival triage / attack planning
+├── tests/          run_examples.sh     # smoke test: positive controls + two breaks
+│                   midnotch_control.py # regression: core notch in middle position
+│                   coverage_threshold.py # how much crib the middle rotor needs
+├── scratch/                            # one-off probes, not part of the toolkit
+└── doc/            USAGE.md, Us.md     # tool usage (EN / CA)
 ```
 The `data/` tree is the stable, citable core. The `src/` and `python/` trees
 are tooling that may evolve.

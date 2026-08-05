@@ -1,0 +1,29 @@
+[
+  {
+    "archive": "CDMH",
+    "signature": "Caja 745",
+    "date_transmission": "1936-12-14",
+    "date_interception": "1936-12-14",
+    "sender": "Estación de Palma de Mallorca (bàndol nacional)",
+    "recipient": null,
+    "header": null,
+    "grundstellung": "ZXNE",
+    "body": "LERA QBJO LAHP JQOR OREG AEAL PFAU RTAPO RALU LARK ICEB MCZH BEHT PNIK LBTH ENXZ",
+    "garble_check": "ENXZ",
+    "reference": "Ref: 32 y 24",
+    "classification": "enigma_k_candidate",
+    "ic": 0.0552,
+    "n": 61,
+    "source_type": "typed_intercept",
+    "notes": "Full de 'Servicio de Enlaces Radiotelegraficos del Ministerio de la Guerra - Radiotelegramas captados a estaciones facciosas', amb 2 missatges mes en pla (Guardia Civil Coruna-Oviedo; Comandancia Marruecos-Salamanca), no Enigma, mateixa data 14-12-36. Aquest es l'unic dels tres candidat a Enigma. NO hi ha capcalera de 4 grups separada del cos en aquesta transcripcio -> 'header' es null; el Grundstellung ZXNE es NOMES una hipotesi derivada de invertir el grup final ENXZ (mateixa convencio garble-check que XMOT/LUIS/DHZB/MKCX), no una lectura directa d'un tercer grup de capcalera. S'ha suprimit UNA ocurrencia del grup 'RALU', duplicat consecutiu al text tal com transcrit ('RALU RALU'), assumit artefacte de retransmissio (mateix patro que 'FAEQ LHDF FAEQ LHDF' a XMOT). El grup 'RTAPO' (5 lletres) es una anomalia de transcripcio no resolta -- possible error de mecanografiat de l'epoca o de lectura de la imatge -- mantinguda tal qual perque parse_body() nomes concatena lletres i ignora els espais, de manera que no afecta l'analisi. IC=0.0552 (n=61, despres de treure el RALU duplicat i el garble check) queda per sobre de la banda Enigma esperada (~0.038-0.042) pero N es petit i per tant poc concloent (mateixa cautela que amb LUIS, n=80, IC=0.0377): la classificacio com a candidat Enigma es recolza en el patro estructural (grup final = invers d'un Grundstellung plausible), no en l'IC.",
+    "found_by": "Jordi Fornés",
+    "status": {
+      "solved": false,
+      "assessment": "Encara no intentat. Primer pas recomanat: escombrada IoC-blind amb D i F (pur i barrejat) per descartar-los, tal com es va fer amb DHZB; si falla amb tots dos, es un altre candidat (a mes de MVNR) per a la investigacio del cablejat C encara no recuperat.",
+      "checked_with": null,
+      "checked_date": null
+    }
+  }
+]
+
+

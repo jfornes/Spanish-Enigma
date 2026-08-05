@@ -1,0 +1,130 @@
+{
+  "id": "SUR",
+  "found_by": "jfornes — CDMH, Caja 745 (Salamanca)",
+  "reference": {
+    "archive": "CDMH, Caja 745",
+    "header_clear": "De Mallorca para Salamanca num. 87 el 6 a las 18.20.",
+    "from": "El comandante militar de Baleares",
+    "to": "el generalisimo",
+    "number": 87,
+    "day": 6,
+    "time": "18.20",
+    "trailer_clear": "REF 13 43 y 17",
+    "note_on_clear_parts": "La capcalera i el peu ('REF 13 43 y 17') son en clar al document; NO formen part del criptograma."
+  },
+  "header_protocol": {
+    "note": "Derivat del manual de Sarmiento (criptohistoria.es/manual-enigma.html) i VERIFICAT contra XMOT i LUIS amb el simulador.",
+    "block_of_4_groups": "[g1, g2, GRUND(en clar), g4]",
+    "g1": "clau de missatge (les 4 lletres que l'operador posa a les finestres per xifrar el cos), XIFRADA al Grundstellung del DIA. Verificat: XMOT g1->'XMOT' amb Gday DPET; LUIS g1->'SLUI' amb Gday JEIZ.",
+    "g2": "farciment/continuacio de la mateixa encriptacio; nomes les 4 primeres (g1) porten la clau.",
+    "g3_grund": "el Grundstellung de partida EN CLAR (repetit sense xifrar). = manual: 'poniendo en tercer lugar el grupo cuaternario inicial sin cifrar'.",
+    "garble_check": "l'ULTIM grup del COS = Grundstellung amb les lletres INVERTIDES, en clar. = manual: 'que se repetira tambien pero con las letras invertidas ocupando el ultimo lugar'. Verificat: XMOT TOMX=rev(XMOT), LUIS SIUL=rev(LUIS), DHZB BZHD=rev(DHZB), MKCX XCKM=rev(MKCX)."
+  },
+  "indicator": {
+    "as_written": "SUR",
+    "written_separately": true,
+    "hypothesis_A_preferred": {
+      "reading": "trigrama d'indicador escrit al davant del cos, separat",
+      "convention": "als altres missatges el grup escrit (L,M,R,U) roda una posicio a la dreta per donar les finestres (U,L,M,R): XMOT->XMKC-style, LUIS->SLUI, MKCX->XMKC",
+      "implied_windows": "?SUR  (U desconegut, L=S, M=U, R=R)",
+      "consequence": "les finestres L/M/R queden FIXADES; l'unic parametre lliure de l'UKW es un offset (l'UKW no avanca), o sigui que la cerca es redueix a Ringstellung x ordre x cablejat, sense escombrar finestres."
+    },
+    "hypothesis_B": {
+      "reading": "'SUR' es el nom de la clau/xarxa escrit en clar, no un indicador",
+      "consequence": "les finestres tornen a ser desconegudes; caldria escombrada completa."
+    },
+    "hypothesis_C": {
+      "reading": "l'indicador es a l'ultim grup, com a MKCX (XCKM invertit -> MKCX)",
+      "last_group": "QGKC",
+      "reversed": "CKGQ",
+      "implied_windows": "QCKG",
+      "note": "no encaixa amb 'SUR'; provar nomes si A falla."
+    }
+  },
+  "body": {
+    "n": 64,
+    "groups": [
+      "IZSL",
+      "WFRB",
+      "YSQV",
+      "MHRO",
+      "JHHX",
+      "EFBL",
+      "ZJQL",
+      "NWVB",
+      "WQCQ",
+      "GQEZ",
+      "KCVH",
+      "XQPO",
+      "WPRK",
+      "PJUN",
+      "SNCK",
+      "QGKC"
+    ],
+    "stream": "IZSLWFRBYSQVMHROJHHXEFBLZJQLNWVBWQCQGQEZKCVHXQPOWPRKPJUNSNCKQGKC",
+    "ioc": 0.0382,
+    "last_group_note": "S'assumeix que l'ultim grup (QGKC) pot ser garble-check; no fer-hi caure cribs."
+  },
+  "transcription": {
+    "source_image": "Screenshot_2026-07-12_at_21_37_56.png",
+    "grouping_note": "L'original escriu les lletres seguides, sense grups. La reagrupacio en 4 dona 16 grups exactes (64 lletres), cosa que corrobora la lectura.",
+    "uncertain_cells": [
+      {
+        "pos": 13,
+        "group": 4,
+        "read": "M",
+        "alternatives": [
+          "N",
+          "H"
+        ],
+        "confidence": "mitjana"
+      },
+      {
+        "pos": 16,
+        "group": 4,
+        "read": "O",
+        "alternatives": [
+          "Q",
+          "G"
+        ],
+        "confidence": "mitjana"
+      },
+      {
+        "pos": 21,
+        "group": 6,
+        "read": "E",
+        "alternatives": [
+          "B"
+        ],
+        "confidence": "baixa — l'usuari llegeix B, la imatge suggereix E"
+      },
+      {
+        "pos": 41,
+        "group": 11,
+        "read": "K",
+        "alternatives": [
+          "IC (dos cops)"
+        ],
+        "confidence": "alta"
+      }
+    ]
+  },
+  "status": {
+    "solved": false,
+    "assessment": "Transcrit i reconciliat amb la imatge (2026-07-12). Encara no atacat. n=64: massa curt per confiar nomes en IoC; prioritzar crib-drag amb finestres fixades (hipotesi A) i frag-score/paraules reals.",
+    "checked_with": [],
+    "date": "2026-07-12"
+  },
+  "does_not_provide": "Encara desconegut si aporta segon missatge per a nu_II o per al rotor I; dependra de l'ordre de rotors i dels anells recuperats.",
+  "negative_results": [
+    {
+      "date": "2026-07",
+      "what": "Escombrada exhaustiva de la 4a lletra de la Grundstellung. La indicació de l'original és el trigrama 'SUR' escrit a part, sense 4t caràcter; mixed_rotors.py exigeix una Grundstellung concreta de 4 lletres, així que es van generar 26 variants ('SUR'+A..Z) en dues sèries (SUR_cand_* i SUR_full_*, cos retallat vs sencer).",
+      "how": "python3 python/mixed_rotors.py <variant>.json --crib data/cribs/cribs_navales.txt --mix --arr all --procs 12   (scripts: scratch/gen_sur_candidates.py, scratch/escombraSUR.sh, scratch/test_surI.sh)",
+      "space_covered": "26 quartes lletres x {D, F, 6 mixtos} x 24 arranjaments x catàleg de cribs navals",
+      "result": "NEGATIU. Cap dels 52 escombrats no va produir cap lectura marcada com a SPANISH-LIKE. Els 104 fitxers generats (json+log) s'han esborrat; es regeneren amb els scripts de scratch/.",
+      "interpretation": "No descarta que sigui Enigma K. Possibles causes: (a) transcripció incerta (vegeu transcription.uncertain_cells: posicions 13,16,21,41 dubtoses); (b) el cablejat és el C, no disponible; (c) la hipòtesi A sobre l'indicador és falsa; (d) no és Enigma."
+    }
+  ],
+  "classification": "enigma_k_candidate"
+}

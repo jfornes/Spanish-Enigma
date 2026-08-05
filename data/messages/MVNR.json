@@ -1,0 +1,60 @@
+{
+  "archive": "Published source (via Soler 2018)",
+  "signature": "Núñez de Prado 1992 (cited in Soler 2018, pp. 138-139)",
+  "date_transmission": "1936-12-09",
+  "date_interception": null,
+  "sender": "Terminus (Tetuán)",
+  "recipient": "Jefe Superior de las fuerzas militares de Marruecos",
+  "header": [
+    "HPVO",
+    "EVWO",
+    "MVNR",
+    "ABOQ"
+  ],
+  "grundstellung": "MVNR",
+  "body": "OIJB JANN IALY CKGC QIFP ZTCA SEWL MSXC <PLAIN: dio la noticia> ATEG ULFX FNSC CVIE UMKP UMXU IMDY YYZG KSAR DPDM <PLAIN: También afirmó> AJOM RXYE CNBM QFYA VPRX VBRB LQXL VGGW SIYY PQBM NDJF <PLAIN: Sírvase V. E. averiguar> AVHL IXRN ARMX GYNE ISJZ KGZA JQRK PKWA CDVN JCTG RLPH VCKC KFBB DLVJ TMCI BCBS JSLF RDHI XMEV",
+  "body_cipher_only": "OIJB JANN IALY CKGC QIFP ZTCA SEWL MSXC ATEG ULFX FNSC CVIE UMKP UMXU IMDY YYZG KSAR DPDM AJOM RXYE CNBM QFYA VPRX VBRB LQXL VGGW SIYY PQBM NDJF AVHL IXRN ARMX GYNE ISJZ KGZA JQRK PKWA CDVN JCTG RLPH VCKC KFBB DLVJ TMCI BCBS JSLF RDHI XMEV",
+  "garble_check": "RNVM",
+  "reference": null,
+  "classification": "enigma_k_certified",
+  "ic": 0.0387,
+  "n": 192,
+  "source_type": "published_decrypted",
+  "machine_series": "A (A.1232-35)",
+  "known_plaintext": "Radio Tetuán en su emisión de las 4 de la tarde dio la noticia falsa de toma de estaciones Las Rozas y Las Matas. También afirmó que en Madrid esperan ataque fuerzas nacionales. Sírvase V. E. averiguar origen noticias falsas y castigar responsables su propagación dándome cuenta.",
+  "plaintext_cipher_alignment": {
+    "block_1": {
+      "cipher_groups": "OIJB JANN IALY CKGC QIFP ZTCA SEWL MSXC",
+      "cipher_letters": 32,
+      "plaintext_before_break": "Radio Tetuán en su emisión de las [NR 4 XK] de la tarde",
+      "note": "NR/XK brackets encode the digit 4; exact encoding TBD (see manual §NR/XK convention)"
+    },
+    "embedded_plain_1": "dio la noticia",
+    "block_2": {
+      "cipher_groups": "ATEG ULFX FNSC CVIE UMKP UMXU IMDY YYZG KSAR DPDM",
+      "cipher_letters": 40,
+      "plaintext_before_break": "falsa de toma de estaciones Las Rozas y Las Matas."
+    },
+    "embedded_plain_2": "También afirmó",
+    "block_3": {
+      "cipher_groups": "AJOM RXYE CNBM QFYA VPRX VBRB LQXL VGGW SIYY PQBM NDJF",
+      "cipher_letters": 44,
+      "plaintext_before_break": "que en Madrid esperan ataque fuerzas nacionales."
+    },
+    "embedded_plain_3": "Sírvase V. E. averiguar",
+    "block_4": {
+      "cipher_groups": "AVHL IXRN ARMX GYNE ISJZ KGZA JQRK PKWA CDVN JCTG RLPH VCKC KFBB DLVJ TMCI BCBS JSLF RDHI XMEV",
+      "cipher_letters": 76,
+      "plaintext_to_end": "origen noticias falsas y castigar responsables su propagación dándome cuenta."
+    }
+  },
+  "notes": "CRITICAL VALIDATION VECTOR. Originally published in Núñez de Prado y Clavell 1992 (doctoral thesis, Universidad Complutense de Madrid); cited and reproduced by Soler 2018, pp. 138-139, with full plaintext. Uses series-A machines (A.1232-35, same batch as the Sarmiento manual's K-204). 192 cipher letters with ~190 known-plaintext letters — far superior to the manual's 34-letter example. Three embedded plaintext fragments split the ciphertext into four blocks; the Enigma rotor state is CONTINUOUS across the embedded fragments (the rotors do not reset between blocks). If neither wiring D nor F deciphers this message correctly, it CONFIRMS a third wiring (provisionally 'C') for the A.1232-35 / K.203-208 batch. Soler identifies this as 'clave Mecánica' traffic. Rotor order and Ringstellung unknown — must be brute-forced (6 × 26⁴ = 2,741,888 per wiring).",
+  "found_by": "Publicat: Núñez de Prado y Clavell (1992), tesi doctoral UCM; reproduït a Soler Fuensanta (2018), pp. 138-139.",
+  "status": {
+    "solved": false,
+    "assessment": "NO atacat encara amb el motor corregit (ETW + notch al nucli). És el millor vector disponible per al buttoning-up: 192 lletres de criptograma amb ~190 de text clar conegut i estat de rotor CONTINU a través dels tres fragments en clar encastats. Si ni D ni F el desxifren, confirma un tercer cablejat ('C') per al lot A.1232-35 / K.203-208.",
+    "checked_with": [],
+    "checked_date": null
+  },
+  "priority": "ALTA — vector crític per a la recuperació del cablejat C"
+}

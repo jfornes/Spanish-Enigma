@@ -2,8 +2,9 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21208384.svg)](https://doi.org/10.5281/zenodo.21208384)
 
 A research toolkit for the cryptanalysis of Spanish Enigma K traffic
-(1936–1945), accompanying the work *Uns pocs republicans espanyols a
-l'Équipe D del Coronel Bertrand* (J. Fornés & A. Rebull, 2026).
+(1936–1945), accompanying a companion paper on Republican signals
+intelligence and the Spanish Enigma (J. Fornés & A. Rebull, 2026;
+manuscript submitted for publication).
 
 > **Status:** active development. The `data/` archive is stable and citable.
 > The C/Python cryptanalytic toolkit is **functional and validated** against

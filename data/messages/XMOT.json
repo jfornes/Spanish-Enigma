@@ -21,7 +21,7 @@
     "n": 152,
     "source_type": "typed_intercept",
     "notes": "Strongest certification (4/4 lines). Doubled 2-group blocks (FAEQ LHDF; OLZW HVMK) are retransmission artifacts, not cipher; de-doubled body = 38 groups, IC quoted is de-doubled. Grundstellung XMOT transmitted in clear; embedded plaintext mid-body = crib. Page bears red GABINETE DE CIFRA stamp + ENTRADA stamp (11 DIC 1936, 10:35). Priority decryption target. | De-doblat 2026-07-08: el grup 'OLZW HVMK' anava DUPLICAT a la transmissio original (140->132 lletres); col.lapsat a una ocurrencia, insert <PLAIN> conservat.",
-    "found_by": "TO FILL — qui va localitzar el missatge a l'arxiu (crèdit)",
+    "found_by": "Jordi Fornés",
     "solution": {
       "wiring": "F",
       "rotor_order": "II-I-III",

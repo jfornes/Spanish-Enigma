@@ -6,11 +6,12 @@ title: >-
   Spanish-Enigma: A research toolkit for the cryptanalysis of Spanish
   Enigma K traffic (1936–1945)
 abstract: >-
-  Primary-source data and analysis tools for the cryptanalysis of the
-  commercial Enigma K variant used on the Nationalist side of the Spanish
-  Civil War: archival ciphertext transcriptions with provenance metadata,
-  rotor wirings and procedural conventions, and an Enigma K simulator with
-  statistical and hill-climbing attack tooling.
+  Data and software for reading the commercial Enigma K traffic of the
+  rebel forces in the Spanish Civil War: transcriptions of intercepts with
+  their archival provenance, rotor wirings and the stepping with their
+  sources, an Enigma K engine, an exhaustive key search (rod test and a
+  language score for Spanish), Knox's buttoning-up for rotor wirings, and
+  the keys and readings it has produced, with the tests that check them.
 type: software
 authors:
   - family-names: Fornés
@@ -21,8 +22,8 @@ authors:
     given-names: Alba
     affiliation: Universitat Politècnica de Catalunya (UPC-BarcelonaTech)
     orcid: 'https://orcid.org/0009-0005-7979-4636'
-version: 1.0.0
-date-released: '2026-07-05'
+version: 1.1.0
+date-released: '2026-11-19'
 license: GPL-3.0-or-later
 repository-code: 'https://github.com/jfornes/Spanish-Enigma'
 url: 'https://github.com/jfornes/Spanish-Enigma'

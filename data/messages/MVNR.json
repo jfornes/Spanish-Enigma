@@ -1,60 +1,76 @@
 {
-  "archive": "Published source (via Soler 2018)",
-  "signature": "Núñez de Prado 1992 (cited in Soler 2018, pp. 138-139)",
+  "id": "MVNR",
+  "status": {
+    "solved": true,
+    "summary": "Read: 188 of 192 letters. The other 4 are isolated divergences, present both in the thesis and in its 2008 reprint."
+  },
+  "classification": "enigma_k",
+  "found_by": "Published: Núñez de Prado y Clavell (1992), doctoral thesis, Universidad Complutense de Madrid, p. 195, with the plaintext of the telegram; reprinted by Soler Fuensanta and López-Brea Espiau, Soldados sin rostro (2008), pp. 138-139.",
+  "archive": "Published source; the telegram in clear is cited by the thesis as SHM, Arm. 11, Rol. 92, Leg. 561, Carp. 124, Doc. 1",
+  "signature": "Núñez de Prado y Clavell 1992, p. 195",
   "date_transmission": "1936-12-09",
-  "date_interception": null,
-  "sender": "Terminus (Tetuán)",
+  "sender": "Terminus",
   "recipient": "Jefe Superior de las fuerzas militares de Marruecos",
   "header": [
-    "HPVO",
-    "EVWO",
+    "HPFO",
+    "EVWQ",
     "MVNR",
     "ABOQ"
   ],
   "grundstellung": "MVNR",
-  "body": "OIJB JANN IALY CKGC QIFP ZTCA SEWL MSXC <PLAIN: dio la noticia> ATEG ULFX FNSC CVIE UMKP UMXU IMDY YYZG KSAR DPDM <PLAIN: También afirmó> AJOM RXYE CNBM QFYA VPRX VBRB LQXL VGGW SIYY PQBM NDJF <PLAIN: Sírvase V. E. averiguar> AVHL IXRN ARMX GYNE ISJZ KGZA JQRK PKWA CDVN JCTG RLPH VCKC KFBB DLVJ TMCI BCBS JSLF RDHI XMEV",
-  "body_cipher_only": "OIJB JANN IALY CKGC QIFP ZTCA SEWL MSXC ATEG ULFX FNSC CVIE UMKP UMXU IMDY YYZG KSAR DPDM AJOM RXYE CNBM QFYA VPRX VBRB LQXL VGGW SIYY PQBM NDJF AVHL IXRN ARMX GYNE ISJZ KGZA JQRK PKWA CDVN JCTG RLPH VCKC KFBB DLVJ TMCI BCBS JSLF RDHI XMEV",
+  "body": "OIJB JANM IALY CKGQ QIFP ZTCA SEWL MSXO <PLAIN: dio la noticia> ATBG ULFX FNSC CVIE UMWP UMXU IMDY YYZS KSAH DPOM <PLAIN: También afirmó> AJOM RXYE CNBM QIYA VPRX VBHB LQXL VGGW SZYY PQBM NOJF <PLAIN: Sírvase V. E. averiguar> AVHL IXRN ARMZ GYXE ISZJ KGZA JQRK PKWA CDVN JCTG RLPH VCKC KFBS OLVJ TMCI BOBS JGLF RBHI XMEV",
   "garble_check": "RNVM",
-  "reference": null,
-  "classification": "enigma_k_certified",
-  "ic": 0.0387,
+  "reference": "Referencia de clave 3832 y 53",
   "n": 192,
-  "source_type": "published_decrypted",
-  "machine_series": "A (A.1232-35)",
-  "known_plaintext": "Radio Tetuán en su emisión de las 4 de la tarde dio la noticia falsa de toma de estaciones Las Rozas y Las Matas. También afirmó que en Madrid esperan ataque fuerzas nacionales. Sírvase V. E. averiguar origen noticias falsas y castigar responsables su propagación dándome cuenta.",
-  "plaintext_cipher_alignment": {
-    "block_1": {
-      "cipher_groups": "OIJB JANN IALY CKGC QIFP ZTCA SEWL MSXC",
-      "cipher_letters": 32,
-      "plaintext_before_break": "Radio Tetuán en su emisión de las [NR 4 XK] de la tarde",
-      "note": "NR/XK brackets encode the digit 4; exact encoding TBD (see manual §NR/XK convention)"
-    },
-    "embedded_plain_1": "dio la noticia",
-    "block_2": {
-      "cipher_groups": "ATEG ULFX FNSC CVIE UMKP UMXU IMDY YYZG KSAR DPDM",
-      "cipher_letters": 40,
-      "plaintext_before_break": "falsa de toma de estaciones Las Rozas y Las Matas."
-    },
-    "embedded_plain_2": "También afirmó",
-    "block_3": {
-      "cipher_groups": "AJOM RXYE CNBM QFYA VPRX VBRB LQXL VGGW SIYY PQBM NDJF",
-      "cipher_letters": 44,
-      "plaintext_before_break": "que en Madrid esperan ataque fuerzas nacionales."
-    },
-    "embedded_plain_3": "Sírvase V. E. averiguar",
-    "block_4": {
-      "cipher_groups": "AVHL IXRN ARMX GYNE ISJZ KGZA JQRK PKWA CDVN JCTG RLPH VCKC KFBB DLVJ TMCI BCBS JSLF RDHI XMEV",
-      "cipher_letters": 76,
-      "plaintext_to_end": "origen noticias falsas y castigar responsables su propagación dándome cuenta."
-    }
+  "ic": 0.0387,
+  "published_plaintext": "Radio Tetuán en su emisión de las 4 de la tarde dio la noticia falsa de toma de estaciones Las Rozas y Las Matas. También afirmó que en Madrid esperan ataque fuerzas nacionales. Sírvase V. E. averiguar origen noticias falsas y castigar responsables su propagación dándome cuenta.",
+  "notes": "From another collection and another link. The cryptogram is the one printed in the thesis (p. 195), which underlines group 3, MVNR, as the key; its 2008 reprint differs from it in 18 letters, two of them in header groups 1 and 2 (HPVO EVWO). Three passages were sent in clear; they are marked <PLAIN: ...> in the body, and the rotor state runs across them. Two of them are preceded by the W padding of the manual (TARDE WW, NACIONALES WWW). The message took no part in building the model or the search. The published rendering of the plaintext is abridged (it drops DICHAS in ORIGEN DICHAS NOTICIAS FALSAS). Reference: 53 is the number of groups of the telegram, header and garble check included (4 + 48 + 1).",
+  "solution": {
+    "wiring": "F",
+    "rotor_order": "II-I-III",
+    "windows_ULMR": "MVNR",
+    "ringstellung_ULMR": "UFSF",
+    "offsets_ULMR": "SQVM",
+    "plaintext": "NSUEMISIONDELASCUATRODELATARDEWWFALSADETOMADEBSTACIONESLASROZASYLASMATASQUMENMADRIDESPERANATAQUEFUERZJSNACIONALESWWWORIGENDICHASNOTICIASFALSASYCASTIGARRESPONSABLESSUPROPARACIONDANDOMECUENTAWWW",
+    "plaintext_emended": "NSUEMISIONDELASCUATRODELATARDEWWFALSADETOMADEESTACIONESLASROZASYLASMATASQUEENMADRIDESPERANATAQUEFUERZASNACIONALESWWWORIGENDICHASNOTICIASFALSASYCASTIGARRESPONSABLESSUPROPAGACIONDANDOMECUENTAWWW",
+    "plaintext_emended_note": "The 4 divergent positions emended: what the operator presumably typed. No key produces it from this cipher.",
+    "reading": "... EN SU EMISION DE LAS CUATRO DE LA TARDE ... FALSA DE TOMA DE ESTACIONES LAS ROZAS Y LAS MATAS ... QUE EN MADRID ESPERAN ATAQUE FUERZAS NACIONALES ... ORIGEN DICHAS NOTICIAS FALSAS Y CASTIGAR RESPONSABLES SU PROPAGACION DANDOME CUENTA",
+    "command": "python3 python/corpus_sweep.py data/messages/MVNR.json --crib LASROZAS --wirings F",
+    "command_note": "LASROZAS, CASTIGAR and RESPONSABLES each give the same key on their own.",
+    "verified_with": "python3 python/enigma_k.py --json data/messages/MVNR.json",
+    "rotor_I": "Rotor I is in the middle slot at ring S. Its window runs from N to U inside the message without carrying the left rotor on, so its turnover letter is not N to U."
   },
-  "notes": "CRITICAL VALIDATION VECTOR. Originally published in Núñez de Prado y Clavell 1992 (doctoral thesis, Universidad Complutense de Madrid); cited and reproduced by Soler 2018, pp. 138-139, with full plaintext. Uses series-A machines (A.1232-35, same batch as the Sarmiento manual's K-204). 192 cipher letters with ~190 known-plaintext letters — far superior to the manual's 34-letter example. Three embedded plaintext fragments split the ciphertext into four blocks; the Enigma rotor state is CONTINUOUS across the embedded fragments (the rotors do not reset between blocks). If neither wiring D nor F deciphers this message correctly, it CONFIRMS a third wiring (provisionally 'C') for the A.1232-35 / K.203-208 batch. Soler identifies this as 'clave Mecánica' traffic. Rotor order and Ringstellung unknown — must be brute-forced (6 × 26⁴ = 2,741,888 per wiring).",
-  "found_by": "Publicat: Núñez de Prado y Clavell (1992), tesi doctoral UCM; reproduït a Soler Fuensanta (2018), pp. 138-139.",
-  "status": {
-    "solved": false,
-    "assessment": "NO atacat encara amb el motor corregit (ETW + notch al nucli). És el millor vector disponible per al buttoning-up: 192 lletres de criptograma amb ~190 de text clar conegut i estat de rotor CONTINU a través dels tres fragments en clar encastats. Si ni D ni F el desxifren, confirma un tercer cablejat ('C') per al lot A.1232-35 / K.203-208.",
-    "checked_with": [],
-    "checked_date": null
-  },
-  "priority": "ALTA — vector crític per a la recuperació del cablejat C"
+  "divergences": {
+    "count": 4,
+    "in_groups": 4,
+    "note": "1-based positions in the cipher, passages in clear removed. read is the engine's letter, expected the letter the plaintext requires. They are isolated, in four different groups and fixed under any change of key, and the thesis and its reprint agree on them: slips of the operator or of the copy the thesis worked from, not of the model.",
+    "known_positions": [
+      46,
+      75,
+      102,
+      171
+    ],
+    "positions": [
+      {
+        "pos": 46,
+        "read": "B",
+        "expected": "E"
+      },
+      {
+        "pos": 75,
+        "read": "M",
+        "expected": "E"
+      },
+      {
+        "pos": 102,
+        "read": "J",
+        "expected": "A"
+      },
+      {
+        "pos": 171,
+        "read": "R",
+        "expected": "G"
+      }
+    ]
+  }
 }

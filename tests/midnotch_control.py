@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Standalone positive control for the middle-wheel core-notch stepping in the C
-kernel (the `rm=0` bug). NOT part of the repo — a before/after probe.
+"""midnotch_control.py -- the C kernel steps a middle rotor with a core offset
+from its own ring.
 
 Construction: encipher a known plaintext with an order that puts III in the MIDDLE
-(so the middle wheel's core notch, offset 22, drives the stepping and the position
-sequence depends on ringM). Starting M is placed exactly on III's core notch for the
-TRUE ringM, so keystroke 0 is a middle double-step for the true key but NOT for the
-rm=0 (buggy) sequence -> the two models diverge immediately.
+(so the middle wheel's core offset, 22, drives the stepping and the position
+sequence depends on ringM). Starting M is placed exactly on III's turnover for the
+TRUE ringM, so keystroke 0 is a middle double-step for the true key but not for a
+sequence computed with ringM = 0: the two diverge at once.
 
 Then ask the C rod_search (brute) to recover the setting from a crib. Only a kernel
 that recomputes the step sequence with the correct ringM can find it.
@@ -68,7 +68,7 @@ def main():
     print(f"target setting: arr=0 oi=1(I-III-II) UKW={A[u]} rings=(4,3,6)")
     print(f"brute hits: {len(hits)}  ->  target recovered: {found}")
     if hits and not found:
-        print("  (kernel returned hits but NOT the true setting -> rm=0 bug)")
+        print("  (kernel returned hits but NOT the true setting: middle stepping computed without ringM)")
         for h in hits[:5]: print("   ", h)
     print("RESULT:", "PASS" if found else "FAIL")
     return 0 if found else 1

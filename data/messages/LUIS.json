@@ -1,8 +1,83 @@
 {
+  "id": "LUIS",
+  "status": {
+    "solved": true,
+    "summary": "Read. The intercept carries garble: one block inside the text and six letters at the end."
+  },
+  "classification": "enigma_k",
+  "found_by": "Jordi Fornés",
   "archive": "CDMH",
   "signature": "Caja 745",
+  "sheet": {
+    "id": "CDMH.C745.entrada-495",
+    "description": "One typed sheet, one typewriter and one carbon, with four transmissions separated by rules.",
+    "carries": [
+      {
+        "order": 1,
+        "kind": "clear",
+        "route": "Salamanca -> Coruña",
+        "number": 67,
+        "day": 6,
+        "time": "23.25",
+        "from": "El ingeniero comandancia",
+        "to": "el jefe ingeniero octava division"
+      },
+      {
+        "order": 2,
+        "kind": "enigma_k",
+        "message": "DHZB",
+        "prefix": "SD",
+        "route": "Salamanca -> Palma de Mallorca",
+        "number": 69,
+        "day": 7,
+        "time": "01.40",
+        "from": "El comandante ingenieros cuartel general",
+        "to": "el comandante jefe e.m. Baleares"
+      },
+      {
+        "order": 3,
+        "kind": "enigma_k",
+        "message": "LUIS",
+        "route": "Palma de Mallorca -> Salamanca",
+        "number": 94,
+        "day": 6,
+        "time": "21.30",
+        "from": "El comandante marina",
+        "to": "el almirante jefe e.m."
+      },
+      {
+        "order": 4,
+        "kind": "enigma_k",
+        "message": "SUR",
+        "route": "Mallorca -> Salamanca",
+        "number": 87,
+        "day": 6,
+        "time": "18.20",
+        "from": "El comandante militar de Baleares",
+        "to": "el generalisimo"
+      }
+    ],
+    "receipt_stamps": [
+      {
+        "where": "upper left, rotated",
+        "body": "MINISTERIO DE LA GUERRA / ESTADO MAYOR DEL [...] / ENTRADA",
+        "date": "1936-12-08",
+        "number": "495",
+        "annotation": "Informacion",
+        "hand": "date, number and annotation written by hand on the stamp"
+      },
+      {
+        "where": "lower right",
+        "body": "Estado Mayor del Ministerio de la Guerra / SECCION DE INFORMACION / ENTRADA",
+        "time": "17'30",
+        "hand": "time written by hand",
+        "note": "the date box is too faint to read on the image"
+      }
+    ]
+  },
   "date_transmission": "1936-12-06",
   "date_interception": "1936-12-08",
+  "date_note": "The transmission line gives only the day and the hour. The month and year come from the ENTRADA stamp of the sheet, 8 December 1936.",
   "sender": "Comandante de Marina de Baleares (Palma de Mallorca)",
   "recipient": "Almirante Jefe del E.M. (Salamanca)",
   "header": [
@@ -14,23 +89,20 @@
   "grundstellung": "LUIS",
   "body": "OBAL XWWB JUKR UFUD LHEM CICJ TWYQ NCRO LYGK QLVU EPOU UYZV GYWG AKDY NLKV VMOD KPBZ FFNY YRGJ SIVL",
   "garble_check": "SIUL",
+  "garble_check_as_written": "SIVL",
   "reference": "ref y 24",
-  "classification": "enigma_k_probable",
+  "n": 76,
   "ic": 0.0377,
-  "n": 80,
-  "source_type": "typed_intercept",
-  "notes": "Grundstellung LUIS is a memorable 'cilly' key. Garble check SIUL = reverse(LUIS); image last group reads SIVL (U/V typewriter ambiguity). Certification rests on garble + cilly key + endpoints + same series as nr 94, NOT on IC (0.0377 at the band edge, N=80 too small to decide). | Trencat 2026-07-08 (cablejat F). Numeros lletrejats.",
-  "found_by": "Jordi Fornés",
+  "notes": "The starting position is a word, LUIS. The closing check should be the starting position reversed, SIUL; the sheet types SIVL, a U for a V. garble_check holds the rule's value and garble_check_as_written the sheet's, and either is stripped before the attack. The garble that remains belongs to the intercept: it does not move with the key, and it comes in blocks (reading AERONAVAL needs three letters of the group CICJ changed).",
   "solution": {
     "wiring": "F",
     "rotor_order": "II-I-III",
-    "windows_ULMR": "SLUI",
-    "ringstellung_ULMR": "BWEV",
-    "plaintext": "HORASHOYACCIONAERONABHSORDENADARADIOFECHACUATROPROSEGUIRADIASSIETEOCHOYNGEVEECGM",
-    "reading": "HORAS HOY ACCION AERONA[VAL] [·] ORDENADA RADIO FECHA CUATRO PROSEGUIR [·]DIAS SIETE OCHO [garble final]",
-    "recovered_by": "toolkit (corpus_sweep.py crib-drag + corrected stepping)",
-    "command": "python3 python/corpus_sweep.py data/messages/LUIS.json --crib CUATROPROSEGUIR --wirings F --all",
-    "solved_date": "2026-07-08",
-    "notes": "Ordre naval-aeronaval amb dates i hores; numeros lletrejats (CUATRO, SIETE, OCHO). El residu final es corrupcio real de transmissio."
+    "windows_ULMR": "LUIS",
+    "ringstellung_ULMR": "UFSF",
+    "offsets_ULMR": "RPQN",
+    "plaintext": "HORASHOYACCIONAERONABHSORDENADARADIOFECHACUATROPROSEGUIRADIASSIETEOCHOYNGEVE",
+    "reading": "HORAS HOY ACCION AERONA[VAL] [·] ORDENADA RADIO FECHA CUATRO PROSEGUIR [·]DIAS SIETE OCHO [six letters of garble]",
+    "command": "python3 python/corpus_sweep.py data/messages/LUIS.json --crib CUATROPROSEGUIR --wirings F",
+    "verified_with": "python3 python/enigma_k.py --json data/messages/LUIS.json"
   }
 }

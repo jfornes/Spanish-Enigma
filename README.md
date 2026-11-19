@@ -1,237 +1,213 @@
 # Spanish-Enigma
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21208384.svg)](https://doi.org/10.5281/zenodo.21208384)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21208383.svg)](https://doi.org/10.5281/zenodo.21208383)
 
-A research toolkit for the cryptanalysis of Spanish Enigma K traffic
-(1936–1945), accompanying a companion paper on Republican signals
-intelligence and the Spanish Enigma (J. Fornés & A. Rebull, 2026;
-manuscript submitted for publication).
+Data and software for reading the Enigma K traffic of the Spanish Civil War:
+the intercepts with their archival provenance, the machine as the engine models
+it, the search that recovers keys, and the keys and readings it has produced.
 
-> **Status:** active development. The `data/` archive is stable and citable.
-> The C/Python cryptanalytic toolkit is **functional and validated** against
-> known wirings (see *Quick validation* below); some C-acceleration paths are
-> still in progress.
+It accompanies two manuscripts submitted for publication (J. Fornés and
+A. Rebull, 2026): a technical paper on the readings and their keys, and a
+historical paper on the Republican signals-intelligence service that took the
+traffic down.
 
----
-
-## Scope
-
-The Nationalist side of the Spanish Civil War (1936–1939) operated a variant
-of the commercial Enigma K machine, distinguished from the German military
-Enigma by a **settable reflector** (four-letter *Grundstellung*), **no
-plugboard**, and a small number of custom wirings (variants A through F
-documented by Soler Fuensanta, Quirantes Sierra, and Weierud). This
-repository collects:
-
-- **Primary-source data**: transcriptions of intercepted ciphertexts from the
-  *Centro Documental de la Memoria Histórica* (CDMH, Salamanca), procurement
-  records from the *Archivo Histórico Nacional* (AHN), distribution records
-  from the *Archivo General Militar de Ávila* (AGMAV), and cross-referenced
-  serial-number lists.
-- **Reference cryptographic data**: rotor wirings (where published), reflector
-  configurations, notch positions, and procedural conventions (garble-check
-  format, message-key handling).
-- **Analysis code**: an Enigma K search engine in C (POSIX pthreads) with a
-  Python front-end for I/O, statistics (index of coincidence, Spanish-fragment
-  scoring) and orchestration; plus Knox-style *rodding* and *buttoning-up*
-  solvers for the unsteckered machine.
-
-## Why a dedicated toolkit
-
-Existing open-source Enigma simulators target the German military variants
-(Wehrmacht I, M3, M4) and assume a fixed reflector. The Spanish K requires a
-different parameter space (**settable UKW × 3 rotors × ring settings × wiring
-variant × rotor order**) and a different statistical reference (Spanish 1930s
-frequencies, not English or German). The data and procedures gathered here
-support reproducible analysis of a corpus that is still largely unpublished.
+The machines are commercial Enigma K: no plugboard, a QWERTZ entry wheel and a
+settable reflector, so the key has four starting letters and four
+Ringstellungen. Two rotor wirings are in print, D and F; every message read here
+is on F.
 
 ---
 
-## Repository structure
+## The messages
+
+| file | date (1936) | link | status | key: wiring, rotor order, windows, Ringstellung |
+|---|---|---|---|---|
+| `LUIS` | 6 Dec | Palma → Salamanca | read | F, II-I-III, `LUIS`, `UFSF` |
+| `DHZB` | 7 Dec | Salamanca → Palma | read, 80 of 80 | F, II-I-III, `DHZB`, `UFSF` |
+| `MVNR` | 9 Dec | Terminus → Moroccan command | read, 188 of 192 | F, II-I-III, `MVNR`, `UFSF` |
+| `XMOT` | 11 Dec | Salamanca → Palma | read, 132 of 132 | F, II-I-III, `XMOT`, `AMIF` |
+| `MKCX` | undated | Palma → Salamanca | read, letters 34–142 | F, I-III-II, `MKCX`, `LJHU` |
+| `SUR` | 6 Dec | Mallorca → Salamanca | candidate | (see the file) |
+| `MNAS` | — | the manual's worked example | validation, 66 of 68 | F, II-III-I, `MNAS`, `QDRR` |
+
+All but `MVNR` and `MNAS` come
+from Caja 745 of the Centro Documental de la Memoria Histórica (Salamanca).
+`MVNR` was published with a plaintext by Núñez de Prado (1992), whose cryptogram
+it follows, and reprinted by Soler Fuensanta and López-Brea Espiau (2008); `MNAS` is the worked example
+of Sarmiento's manual (Salamanca, November 1936).
+
+Each file in `data/messages/` holds the sheet, the cryptogram, the key, the
+reading, the searches that failed, and the name of whoever found the sheet.
+[`data/messages/README.md`](data/messages/README.md) describes the fields.
+
+## What else is here
+
 ```
-spanish-enigma/
-├── data/
-│   ├── wirings/    wirings.json        # ETW, UKW, rotor sets, wiring variants + sources
-│   ├── messages/   *.json              # intercepted ciphertexts with archival metadata
-│   ├── cribs/      *.txt               # probable-word catalogues
-│   └── serials/    machine_registry.json + README   # machine/station registry
-├── src/            rods.c, Makefile    # C search engine (librods.so / .dylib)
-├── python/         enigma_k.py         # the machine itself (simulator / reference oracle)
-│                   rodslib.py          # loader for the C library
-│                   corpus_sweep.py     # IoC triage + crib-drag
-│                   rods_frontend.py    # rodding, couplings, linking
-│                   buttonup.py         # rotor-wiring recovery (Knox buttoning-up)
-│                   calibrate_notch.py  # core-notch offset calibration
-│                   mixed_rotors.py     # rotors drawn from different wiring sets
-│                   message_eval.py     # archival triage / attack planning
-├── tests/          run_examples.sh     # smoke test: positive controls + two breaks
-│                   midnotch_control.py # regression: core notch in middle position
-│                   coverage_threshold.py # how much crib the middle rotor needs
-├── scratch/                            # one-off probes, not part of the toolkit
-└── doc/            USAGE.md, Us.md     # tool usage (EN / CA)
+data/
+  messages/   one file per message (above)
+  wirings/    wirings.json: entry wheel, reflector, rotor sets D and F, stepping; every datum with its source
+  cribs/      cribs_navales.txt: probable words
+  lang/       public-domain Spanish prose that scores decrypts (README gives the measurements)
+  serials/    machine_registry.json: machines and stations of the Spanish theatre
+src/          rods.c, Makefile: the search library librods (C, POSIX threads)
+python/
+  enigma_k.py       the machine: enciphers or deciphers a text with a given key
+  corpus_sweep.py   the key search, blind or with a crib
+  lang_model.py     how a decrypt is scored as Spanish
+  sarmiento.py      the operating rules of the Spanish manual, as code
+  buttonup.py       Knox's buttoning-up: rotor wiring from a crib
+  rods_frontend.py  rod test and Turing's couplings, on librods
+  rodslib.py        loader for librods
+tests/        run_all.sh and the checks it runs, including two vectors from TNA HW 43/7
+doc/          USAGE.md (English), Us.md (Catalan)
 ```
-The `data/` tree is the stable, citable core. The `src/` and `python/` trees
-are tooling that may evolve.
-
----
 
 ## Build
 
-The C library has no external dependencies beyond a C compiler and POSIX
-threads; it builds identically on Linux and macOS.
+The C library needs a C compiler and POSIX threads; the Python tools need
+Python 3 and NumPy.
 
 ```bash
-cd src
-make            # -> librods.so (Linux) or librods.dylib (macOS)
-```
-
-The Python front-end needs Python 3 and (for the rod front-end) NumPy:
-
-```bash
+cd src && make && cd ..      # librods.so (Linux) or librods.dylib (macOS)
 pip install numpy
 ```
 
-`rodslib.py` locates the compiled library automatically (it looks at
-`$SPANISH_ENIGMA_LIB`, then `python/`, then `../src/`, then `../build/`), so
-running the Python tools from `python/` after `make` in `src/` works out of the
-box.
+`rodslib.py` finds the library through `$SPANISH_ENIGMA_LIB`, then `python/`,
+`src/` and `build/`.
 
-## Tools
+## Try it
 
-| Tool | Purpose |
-|------|---------|
-| `corpus_sweep.py` | Ciphertext-only **IoC + Spanish-fragment ranking**, or exact **known-plaintext crib-drag** (`--crib`) that recovers the full key (wiring, order, arrangement, *Ringstellung*, offset) and prints the decryption. Applies message hygiene automatically (removes `<PLAIN: …>` blocks; strips the reversed-*Grundstellung* garble-check group). |
-| `rods_frontend.py` | Front-end for the C rod-search library. Two kernels: `brute` (exact-crib full enumeration) and `coupling` (Turing's coupling method, *Treatise* Ch. IV pp. 71–73). |
-| `buttonup.py` | Knox-style **buttoning-up**: recovers the fast (right) rotor **wiring** from cribs by constraint propagation. `--selftest` reproduces the recovery of wiring **F** as a positive control. |
-| `message_eval.py` | Field triage: for each intercept, reports what it contributes to recovering an unknown wiring (right/middle/left-rotor gauges, depth sets) without cracking it. |
-| `rodslib.py` | Shared loader for `librods` (not a CLI). |
-
----
-
-## Quick validation
-
-The engine ships with a self-contained positive control. After building:
+The engine is the machine: with the key of `LUIS`, the first words of its
+plaintext give back the opening of the cryptogram as it stands on the sheet,
+`OBAL XWWB JUKR UF`.
 
 ```bash
-cd python
-python3 buttonup.py --selftest
-# -> [selftest py] recovered right rotor == true wiring F: True
+python3 python/enigma_k.py --wiring F --order II-I-III \
+        --windows LUIS --ring UFSF --text "HORAS HOY ACCION"
+python3 python/enigma_k.py --json data/messages/XMOT.json     # replay a stored reading
 ```
 
-A successful selftest means the machine model and the constraint solver agree
-with a known wiring (F) recovered from a crib — the precondition before running
-anything on real traffic.
+The search goes the other way and recovers the key from the ciphertext:
 
-## Reproducing the analysis
+| message | command | the key is |
+|---|---|---|
+| `XMOT` | `python3 python/corpus_sweep.py data/messages/XMOT.json --crib MOVIMIENTOBARCOS --wirings F` | the only match |
+| `LUIS` | `python3 python/corpus_sweep.py data/messages/LUIS.json --crib CUATROPROSEGUIR --wirings F` | the only match |
+| `MVNR` | `python3 python/corpus_sweep.py data/messages/MVNR.json --crib LASROZAS --wirings F` | the only match |
+| `DHZB` | `python3 python/corpus_sweep.py data/messages/DHZB.json --wirings F` | first among the runs of W |
+| `MKCX` | `python3 python/corpus_sweep.py data/messages/MKCX.json --wirings F` | first by score |
 
-The certified December-1936 intercepts live in `data/messages/`. To rank
-candidate decryptions of a message by index of coincidence and Spanish-fragment
-score:
+Without a crib the search prints its best candidates and, apart, those that
+carry a run of W, the padding Sarmiento's manual prescribes. A blind sweep of
+one wiring takes about six seconds for eighty letters on eight cores.
+
+For a message of another period, let the search also place the rotors' turnover
+(see *Stepping* below): `--sweep-turnover right` tries the right rotor's turnover
+at each of the 26 rod positions, at 26 times the cost; `middle` does the same
+for the middle rotor and `both` tries the 676 combinations. `--notch` fixes the
+stepping by hand (`III=22,II=15`, a window letter such as `III=N`, or `none`).
+Without these options the search uses the values of `wirings.json`.
 
 ```bash
-cd python
-python3 corpus_sweep.py ../data/messages/XMOT.json          # IoC / fragment ranking
+python3 python/corpus_sweep.py data/messages/SUR.json --wirings F --sweep-turnover right
 ```
 
-To recover the exact key from a known-plaintext crib and print the decryption
-(here the XMOT message, message nº 116, Salamanca→Palma):
+## Tests
 
 ```bash
-python3 corpus_sweep.py ../data/messages/XMOT.json --picker XMOT --crib MALLORCA --procs 8
+sh tests/run_all.sh          # everything that must pass before a release
+sh tests/compat_check.sh     # builds, runs run_all.sh, times two reference searches
 ```
 
-> **Note.** The crib-drag key search currently falls back to a NumPy reference
-> when the optional C anchor symbol (`buttonup_anchor`) is absent from the built
-> library; it is correct but slow. The parallel C acceleration of the crib path
-> is in progress (see the scope note in `src/rods.c`).
+`run_all.sh` checks that the message files are coherent and that the engine
+replays every solved message from its file; asserts the manual's rules on its
+own examples; checks that the scoring separates the true readings from their
+letters shuffled; runs the buttoning-up on a synthetic crib, on the archival
+pairs and on the real traffic; checks the stepping of a middle rotor in the C
+kernel; checks that the Python search and the C kernels step every rotor set
+alike, that `LRS10`, the one real message on wiring D, reads with D's stepping,
+and that `--sweep-turnover` finds a key whose turnover falls outside the values of
+December 1936; and replays two vectors from the history of the Knox section (TNA
+HW 43/7): the rod square of pp. 16-19 and the break of pp. 88-90, which the
+entry wheel in keyboard order reproduces at 99 of 99 letters.
 
----
+## The machine model
 
-## Method & provenance
+**Indicator.** Group 3 of the header, sent in clear, gives the windows in the
+order reflector, left, middle, right, as in the manual's worked example. Read
+that way, three messages of 6, 7 and 9 December on three links share one
+Ringstellung, `UFSF`, and `XMOT` of 11 December has `AMIF`: rotor order and
+Ringstellung were set for a period, as the manual prescribes.
 
-The search kernel is the **click / contradiction test** from A. M. Turing,
-*Treatise on the Enigma* ("Prof's Book", c. 1940), Ch. IV, *Single-wheel
-processes (Unsteckered Enigma)*, pp. 71–73: a candidate configuration that
-reproduces every crib letter has zero contradictions; the crib is tested
-letter by letter and abandoned at the first contradiction. Wheel stepping
-follows the **A27** convention (turnover keyed to the window letter,
-ring-independent; Turing pp. 4–5, and Soler/López-Brea/Weierud 2010). Wiring
-recovery follows the historical Knox / ISK pipeline for the unsteckered
-Enigma: **rodding → buttoning-up**. The wirings themselves are held as data in
-`data/wirings/wirings.json`, with their published sources cited there.
+**Stepping.** On the Enigma K the notch is cut in the alphabet ring, so a
+rotor carries its neighbour on at a fixed window letter (Y, E, N for I, II,
+III), 18 positions after the ring letter of its notch (G, M, V) on every rotor
+of both sets. What a decrypt depends on is the rod position at which the turnover falls,
+window less ring, and that depends on the Ringstellung. With the header letters
+taken as the windows, the engine places it as follows:
 
----
+- Wiring F: at rod position 22 for III and 15 for II, rotor I at window Y. This
+  is where the turnover falls in the traffic of December 1936, and it reproduces
+  every message from the header as transmitted. With the notch at N, as Turing
+  describes and the two surviving machines show, it means a Ringstellung of R
+  for III and header letters displaced from the windows by a constant fixed for
+  the period; the traffic alone cannot exclude that the header gives the
+  windows themselves and the turnover is fixed to the core.
+- Wiring D: at the window letters Y, E, N. `LRS10`, a naval-attaché message on
+  D read by M. Hörenberg, reads 90 of 90 letters this way and not with F's
+  offsets (`tests/lrs10_control.py`).
+- A mixed set (`--wirings DFF`) takes each rotor's rule from its own set.
 
-## Data format
+Both are the values of one period or one message. Traffic of another period,
+with another Ringstellung, turns over elsewhere: `--sweep-turnover` and `--notch`
+(above) free the turnover. `data/wirings/wirings.json` (block `stepping`) records
+the readings, the offsets and the messages they were measured on; the method
+and the evidence are in the technical paper.
 
-Each ciphertext in `data/messages/` is a JSON document carrying its archival
-provenance, so it is re-citable independently of the toolkit:
+## More traffic
 
-```json
-{
-  "archive": "CDMH",
-  "signature": "Caja 745",
-  "date_transmission": "1936-12-11",
-  "sender": "Generalísimo, Cuartel General (Salamanca)",
-  "recipient": "Comandante Militar de Baleares (Palma de Mallorca)",
-  "header": ["ZYPY", "VZRY", "XMOT", "RSPG"],
-  "grundstellung": "XMOT",
-  "body": "AGSZ FAEQ LHDF ... <PLAIN: de que me da cuenta en sus telegramas es> ... UJRA TOMX",
-  "garble_check": "TOMX",
-  "classification": "enigma_k_certified",
-  "ic": 0.0392,
-  "notes": "…"
-}
-```
-
-The `data/serials/` and `data/wirings/` registries follow the same discipline:
-every entry carries a `source` and a `confidence` tag (`sourced` / `likely` /
-`inferred`). Inferences are kept flagged and never promoted to fact without a
-document.
-
----
+The Caja 745 messages come from a fonds of 97 boxes, of which five have been
+examined. A sheet in four-letter groups whose third header group comes back,
+reversed, at the end of the body is a candidate. Whoever meets one can try it
+against the keys and the search above, or send it to us; every message file
+names whoever found the sheet. Contributions of transcriptions, wirings or
+methods are welcome: please open an issue first, and give the archival
+reference (archive, fonds, signature) of every primary source.
 
 ## License
 
-The **source code** is distributed under the GNU General Public License v3.0.
-See [LICENSE](LICENSE).
-
-The **transcribed primary-source data** are not subject to copyright (the
-documents are public records in the Spanish state archives); the transcriptions
-and metadata in `data/` are released for reuse under
-[CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/) — please cite the
-archival source (archive, fund, signature) as recorded in each file.
+The **source code** is under the GNU General Public License v3.0 (see
+[LICENSE](LICENSE)). The **transcriptions and metadata** in `data/` are
+released under [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/); the
+documents themselves are public records in the Spanish state archives. Please
+cite the archival source recorded in each file.
 
 ## Citation
 
-If you use this repository in academic work, please cite both the software and
-the accompanying paper. Machine-readable metadata is in
-[`CITATION.cff`](CITATION.cff).
+Please cite the software and the accompanying papers; machine-readable
+metadata is in [`CITATION.cff`](CITATION.cff).
 
 ```
-Fornés, J., & Rebull, A. (2026). Spanish-Enigma: A research toolkit for the cryptanalysis of Spanish Enigma K traffic (1936–1945) 
-Zenodo. https://doi.org/10.5281/zenodo.21208383. 
+Fornés, J., & Rebull, A. (2026). Spanish-Enigma: A research toolkit for the
+cryptanalysis of Spanish Enigma K traffic (1936–1945) (Version 1.1.0). Zenodo.
+https://doi.org/10.5281/zenodo.21208383
 ```
-
-
-## Contributing
-
-Contributions of additional transcriptions, corrected wirings, or analytical
-methods are welcome. Please open an issue before submitting a pull request, and
-ensure every primary-source contribution includes its archival reference
-(archive, fund, signature).
 
 ## Acknowledgments
 
-Builds on the published work of Frode Weierud, José Ramón Soler Fuensanta, Arturo Quirantes
-Sierra, Geoff Sullivan and others on the Spanish Enigma. This
-repository complements rather than replaces their contributions; the wirings
-and procedures published in their work are reproduced here as data (with
-attribution) for reproducible analysis.
+Builds on the published work of Frode Weierud, José Ramón Soler Fuensanta,
+Arturo Quirantes Sierra, Geoff Sullivan and others on the Spanish Enigma. The
+wirings and procedures published in their work are reproduced here as data,
+with attribution.
 
-AI assistants (Anthropic Claude) were used during development for code
-drafting, text editing, and methodological discussion. All archival research,
-historical interpretation, and final decisions are the authors' responsibility.
+An AI assistant (Claude, Anthropic) was used in developing the software and in
+preparing the papers: for drafting code, for running analyses, for
+methodological discussion and for editing text. The architecture of the
+software and the choice of methods are the authors'. The generated code is
+verified by the tests in `tests/`, against vectors independent of it and
+against the readings themselves; every result is reproducible from this
+release. The archival research, the historical interpretation and all final
+decisions are the authors' responsibility.
 
 ---
 
-*Repository maintained by Jordi Fornés (UPC-BarcelonaTech).*
+*Maintained by Jordi Fornés (UPC-BarcelonaTech).*

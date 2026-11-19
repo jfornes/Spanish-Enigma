@@ -25,10 +25,10 @@ MATH (validated against wiring F, this file's --selftest):
   UNDER-determined (~39 unknowns vs ~20 constraints). Multiple stretches from a
   long crib over-determine R and make recovery unique+fast.
 
-SCOPE: Python is the front-end + reference solver. The heavy piece -- brute
-forcing the 2-contact anchor (26x26 seeds x search) when rodding gives no anchor
--- is the kernel to move into librods (C). With an anchor supplied, this pure-
-Python solver already recovers the rotor instantly.
+SCOPE: Python is the front-end and the reference solver. With an anchor from
+rodding it recovers the rotor at once. Without one, the two most-constrained
+contacts are brute-forced over 26x26 seeds; that loop is also in librods
+(buttonup_anchor), which --selftest-c exercises.
 """
 import sys, argparse
 import corpus_sweep as cs
@@ -146,7 +146,7 @@ def brute_anchor(cons, ns, touched, max_sol=50, cap_each=200_000):
 
 # --------------------------------------------------------------------------- #
 def _synthetic_F(nletters=70):
-    """Build a synthetic wiring-F crib (we control everything -> positive control).
+    """Build a synthetic wiring-F crib (everything is known: a positive control).
     Returns (cons, n_stretch, touched, rfF, n_letters)."""
     order = ('II', 'I', 'III'); W = cs.WIRINGS['F']
     rfF = cs.perm(W[order[2]])[0]
@@ -192,6 +192,102 @@ def solve_c(cons, ns, touched, nthreads=1, max_sols=400):
         s = [int(x) for x in out[i*26:(i+1)*26]]
         seen[tuple(s[k] for k in touched)] = s
     return list(seen.values()), (a, b)
+
+
+def _selftest_external():
+    """The check _synthetic_F structurally cannot make.
+
+    WHY THE SYNTHETIC TEST IS BLIND. _synthetic_F enciphers with cs.decode_all
+    and then builds constraints with build_constraints, and both read the same
+    module globals -- the same wirings, the same NOTCH_OFFSET, the same
+    stepping. Get the stepping wrong and BOTH sides are wrong in exactly
+    the same way, the constraints are satisfied by the true wiring anyway, and
+    the test prints a confident pass. It is a positive control for the solver
+    and no control at all for the machine model. A test whose oracle shares the
+    bug with the code cannot fail.
+
+    THE EXTERNAL VECTORS are the message files with a solution: ciphertext
+    from the source against the plaintext read from it. MNAS is external in
+    both halves, ciphertext and plaintext coming from Sarmiento's manual of
+    1936. If the model, the wirings or the stepping are wrong, the constraints
+    built from such a pair are not satisfiable by the true rotor and this fails.
+
+    Positions declared under a file's divergences are skipped: they are damage
+    in the source, not evidence about the machine."""
+    import json, os, glob
+
+    def consistent(m, s, notch):
+        """Does the true right wheel turn this crib into a consistent per-stretch
+        involution under the given notch model? Returns None if unusable."""
+        body, _ = cs.parse_body(m)
+        plain = s.get("plaintext_emended") or s.get("plaintext")
+        if not (body and plain):
+            return None
+        skip = {int(i) - 1 for i in (m.get("divergences") or {}).get("known_positions") or []}
+        order = tuple(s["rotor_order"].split("-"))
+        w = [c2n[c] for c in s["windows_ULMR"]]
+        rings = tuple(c2n[c] for c in s["ringstellung_ULMR"])
+        saved = cs.NOTCH_OFFSET
+        try:
+            cs.NOTCH_OFFSET = notch
+            cons, ns, touched = build_constraints(
+                order, (w[1], w[2], w[3]), w[0], rings,
+                [c2n[c] for c in plain], [c2n[c] for c in body])
+        finally:
+            cs.NOTCH_OFFSET = saved
+        cons = [c for t, c in enumerate(cons) if t not in skip]
+        rf = cs.perm(cs.WIRINGS[s["wiring"]][order[2]])[0]
+        # A constraint does NOT say rf[in] == out. Peeling the true right wheel
+        # off both ends leaves the stretch involution B, fixed within a stretch,
+        # and rf[in] and rf[out] must be PARTNERS under it. Note the -o: leaving
+        # the wheel the signal returns to the frame. Forgetting it makes this
+        # fail on a correct model.
+        B = {}
+        for (i, j, o, st) in cons:
+            x, y = (rf[i] - o) % 26, (rf[j] - o) % 26
+            for u, v in ((x, y), (y, x)):
+                if B.setdefault((st, u), v) != v:
+                    return (False, len(cons), order[2], len(skip))
+        return (True, len(cons), order[2], len(skip))
+
+    core = cs.NOTCH_OFFSET
+    window = {k: None for k in core}          # the other frame: turnover by window letter
+    here = os.path.dirname(os.path.abspath(__file__))
+    allok = True; disc = []
+    print("[selftest external]  archival ciphertext against archival plaintext, "
+          "per message")
+    print(f"[selftest external]  {'msg':6s} {'right':5s} {'cons':>5s}  "
+          f"{'core frame':>10s} {'window frame':>13s}   discriminates?")
+    for f in sorted(glob.glob(os.path.join(here, "..", "data", "messages", "*.json"))):
+        d = json.load(open(f))
+        for m in (d if isinstance(d, list) else [d]):
+            s = m.get("solution") or {}
+            if not s.get("wiring") or not s.get("rotor_order"):
+                continue
+            a = consistent(m, s, core)
+            b = consistent(m, s, window)
+            if a is None or b is None:
+                continue
+            name = os.path.basename(f)[:-5]
+            allok &= a[0]
+            d_ = a[0] != b[0]
+            disc.append(d_)
+            print(f"[selftest external]  {name:6s} {a[2]:5s} {a[1]:5d}  "
+                  f"{str(a[0]):>10s} {str(b[0]):>13s}   {'YES' if d_ else 'no'}")
+    print(f"[selftest external]  the true wirings satisfy every archival "
+          f"constraint: {allok}")
+    print(f"[selftest external]  {sum(disc)} of {len(disc)} messages can tell the "
+          f"two stepping frames apart")
+    print("[selftest external]  MNAS alone cannot: its ring for the notched wheel "
+          "puts the\n[selftest external]  core turnover exactly on the "
+          "window letter, so both frames\n[selftest external]  agree on it. It is "
+          "a real external vector for the WIRINGS and a\n[selftest external]  null "
+          "test for the stepping.")
+    if not allok:
+        print("[selftest external]  A FAILURE HERE IS A MACHINE-MODEL FAILURE, not "
+              "a solver failure: archival ciphertext and archival plaintext cannot "
+              "both be true under the stepping this code implements.")
+    return allok
 
 
 def _selftest(nthreads=1, use_c=False):
@@ -368,6 +464,10 @@ def _selftest_left():
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="Buttoning-up: recover the fast-rotor wiring.")
+    ap.add_argument("--selftest-external", action="store_true",
+                    help="check the machine model against archival ciphertext "
+                         "and archival plaintext, which --selftest cannot do: "
+                         "its oracle shares every global with the code it tests")
     ap.add_argument("--selftest", action="store_true",
                     help="python reference: recover wiring F (rodding anchor)")
     ap.add_argument("--selftest-c", action="store_true",
@@ -378,6 +478,8 @@ if __name__ == "__main__":
                     help="recover the wiring-F LEFT rotor from 3 messages at distinct left positions")
     ap.add_argument("--procs", type=int, default=1, help="threads for the C kernel (default 1)")
     a = ap.parse_args()
+    if a.selftest_external:
+        sys.exit(0 if _selftest_external() else 1)
     if a.selftest:
         sys.exit(0 if _selftest(use_c=False) else 1)
     if a.selftest_c:

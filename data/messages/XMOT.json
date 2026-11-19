@@ -1,39 +1,95 @@
-[
-  {
-    "archive": "CDMH",
-    "signature": "Caja 745",
-    "date_transmission": "1936-12-11",
-    "date_interception": "1936-12-11",
-    "sender": "Generalísimo, Cuartel General (Salamanca)",
-    "recipient": "Comandante Militar de Baleares (Palma de Mallorca)",
-    "header": [
-      "ZYPY",
-      "VZRY",
-      "XMOT",
-      "RSPG"
+{
+  "id": "XMOT",
+  "status": {
+    "solved": true,
+    "summary": "Read whole: 132 letters of 132."
+  },
+  "classification": "enigma_k",
+  "found_by": "Jordi Fornés",
+  "archive": "CDMH",
+  "signature": "Caja 745",
+  "sheet": {
+    "id": "CDMH.C745.radiogramas-11dic",
+    "description": "Typed reception form headed 'Radiogramas captados por la Oficina Central de Enlace Radiotelegrafico'. It carries three transmissions, each with its own 'Recibido' line; this message is the first.",
+    "carries": [
+      {
+        "order": 1,
+        "kind": "enigma_k",
+        "message": "XMOT",
+        "route": "Salamanca -> Palma de Mallorca",
+        "number": 116,
+        "day": 11,
+        "time": "02.00",
+        "from": "El generalisimo",
+        "to": "el comandante militar Baleares Palma",
+        "received": "1936-12-11 03.05",
+        "reference": "Ref 3980 y 38"
+      },
+      {
+        "order": 2,
+        "kind": "clear",
+        "route": "Palma -> Sevilla",
+        "number": 145,
+        "day": 10,
+        "time": "19,00",
+        "to": "Banco de Espana",
+        "text": "Son catorce mil doscientas pesetas. Roca.",
+        "received": "1936-12-11 03.10"
+      },
+      {
+        "order": 3,
+        "kind": "clear",
+        "route": "Palma -> Sevilla",
+        "to": "Banco Espana",
+        "text": "[...] limitada Carranza y Bernhardt promete concurso ola enumerado en 8 ola enumerado retaco de la misma.",
+        "received": "1936-12-11 03.15"
+      }
     ],
-    "grundstellung": "XMOT",
-    "body": "AGSZ FAEQ LHDF URWM PHEF FFNR <PLAIN: de que me da cuenta en sus telegramas es> AIAO SSCA OLZW HVMK GYKS ZHDL MCHI RCEQ SSUY JMXB OAUD UXFR USFT AIRA THLW RQKK TJOX GCCO PYCV ZZJW RXHF BVVP FAVA VBDD PVQH LFMJ UJRA TOMX",
-    "garble_check": "TOMX",
-    "reference": "Ref 3980 y 38",
-    "classification": "enigma_k_certified",
-    "ic": 0.0392,
-    "n": 152,
-    "source_type": "typed_intercept",
-    "notes": "Strongest certification (4/4 lines). Doubled 2-group blocks (FAEQ LHDF; OLZW HVMK) are retransmission artifacts, not cipher; de-doubled body = 38 groups, IC quoted is de-doubled. Grundstellung XMOT transmitted in clear; embedded plaintext mid-body = crib. Page bears red GABINETE DE CIFRA stamp + ENTRADA stamp (11 DIC 1936, 10:35). Priority decryption target. | De-doblat 2026-07-08: el grup 'OLZW HVMK' anava DUPLICAT a la transmissio original (140->132 lletres); col.lapsat a una ocurrencia, insert <PLAIN> conservat.",
-    "found_by": "Jordi Fornés",
-    "solution": {
-      "wiring": "F",
-      "rotor_order": "II-I-III",
-      "windows_ULMR": "TXMO",
-      "ringstellung_ULMR": "WXGA",
-      "plaintext": "PONERQUEMOVIMIENTOBARCOSCONSECUENCIANUESTROCACAREADODESEMBARCOTOMEPRECAUCIONESPORSIENEMIGOINTENTASEALGUNAACCIONSOBREMALLORCAOIBIZAWW",
-      "reading": "PONERQUEMOVIMIENTOBARCOS «de que me da cuenta en sus telegramas es» CONSECUENCIANUESTROCACAREADODESEMBARCOTOMEPRECAUCIONESPORSIENEMIGOINTENTASEALGUNAACCIONSOBREMALLORCAOIBIZAWW",
-      "recovered_by": "toolkit (mixed_rotors.py IoC-blind + corrected stepping)",
-      "command": "python3 python/corpus_sweep.py data/messages/XMOT.json --crib MOVIMIENTOBARCOS --wirings F --all",
-      "solved_date": "2026-07-08",
-      "notes": "Es llegeix sencer i net d'una sola clau (arranjament canonic).",
-      "arrangement": "canonical"
-    }
+    "receipt_stamps": [
+      {
+        "where": "lower right",
+        "colour": "blue",
+        "body": "Estado Mayor del Ministerio de la Guerra / SECCION DE INFORMACION / ENTRADA",
+        "date": "1936-12-11",
+        "time": "10'35",
+        "hand": "time written by hand"
+      },
+      {
+        "where": "lower left",
+        "colour": "red",
+        "body": "Estado Mayor del Ministerio de la Guerra / SECCION DE INFORMACION / GABINETE DE CIFRA",
+        "date": "1936-12-11",
+        "note": "the number and time boxes are blank"
+      }
+    ]
+  },
+  "date_transmission": "1936-12-11",
+  "date_interception": "1936-12-11",
+  "date_note": "Dated three ways: the transmission line (day 11, 02.00), the 'Recibido' line (03.05, 11-12-936) and both stamps.",
+  "sender": "Generalísimo, Cuartel General (Salamanca)",
+  "recipient": "Comandante Militar de Baleares (Palma de Mallorca)",
+  "header": [
+    "ZYPY",
+    "VZRY",
+    "XMOT",
+    "RSPG"
+  ],
+  "grundstellung": "XMOT",
+  "body": "AGSZ FAEQ LHDF URWM PHEF FFNR <PLAIN: de que me da cuenta en sus telegramas es> AIAO SSCA OLZW HVMK GYKS ZHDL MCHI RCEQ SSUY JMXB OAUD UXFR USFT AIRA THLW RQKK TJOX GCCO PYCV ZZJW RXHF BVVP FAVA VBDD PVQH LFMJ UJRA TOMX",
+  "garble_check": "TOMX",
+  "reference": "Ref 3980 y 38",
+  "n": 132,
+  "ic": 0.0392,
+  "notes": "After the sixth group the operator lapsed into clear; the passage is marked <PLAIN: ...> and is not ciphertext. The machine was paused, not reset, so the rotor state runs across it. Two two-group blocks stood twice in the transmission as taken down (FAEQ LHDF and OLZW HVMK); each is kept once here.",
+  "solution": {
+    "wiring": "F",
+    "rotor_order": "II-I-III",
+    "windows_ULMR": "XMOT",
+    "ringstellung_ULMR": "AMIF",
+    "offsets_ULMR": "XAGO",
+    "plaintext": "PONERQUEMOVIMIENTOBARCOSCONSECUENCIANUESTROCACAREADODESEMBARCOTOMEPRECAUCIONESPORSIENEMIGOINTENTASEALGUNAACCIONSOBREMALLORCAOIBIZAWW",
+    "reading": "PONER QUE MOVIMIENTO BARCOS «de que me da cuenta en sus telegramas es» CONSECUENCIA NUESTRO CACAREADO DESEMBARCO TOME PRECAUCIONES POR SI ENEMIGO INTENTASE ALGUNA ACCION SOBRE MALLORCA O IBIZA [WW]",
+    "command": "python3 python/corpus_sweep.py data/messages/XMOT.json --crib MOVIMIENTOBARCOS --wirings F",
+    "verified_with": "python3 python/enigma_k.py --json data/messages/XMOT.json"
   }
-]
+}

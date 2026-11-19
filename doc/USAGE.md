@@ -1,75 +1,84 @@
-# Spanish-Enigma — tool usage guide
+# Spanish-Enigma — using the tools
 
-Key and wiring recovery for the commercial Enigma K traffic (no plugboard, QWERTZ
-ETW, settable reflector) of Caja 745. The search core is in C (`src/rods.c` →
-`librods.so`), driven by Python front-ends. Wirings are passed as parameters; the
-catalogue lives in `data/wirings/wirings.json`.
-
-## Getting started
+Run everything from the repository root, after building the C library:
 
 ```bash
-cd src && make && cd ..          # build librods.so
-# optional, if the library is not in src/ or build/:
+cd src && make && cd ..          # librods.so (Linux) or librods.dylib (macOS)
+# only if the library is not in src/ or build/:
 export SPANISH_ENIGMA_LIB=/path/to/librods.so
 ```
 
-Every front-end starts with a **positive control** on wiring F: it must reproduce a
-known decryption before any result is trusted. See `tests/run_examples.sh` for
-runnable examples.
+The wirings are data, in `data/wirings/wirings.json`; no tool hard-codes them.
 
-## Tools
+## `enigma_k.py` — the machine
 
-### `corpus_sweep.py` — IoC triage and crib-drag
-Without `--crib`: IoC-blind mode (sweeps wiring × arrangement × order × the 26⁴ ring
-settings and scores each decryption by Index of Coincidence and Spanish fragments).
-With `--crib`: drags a probable word and finds the exact keys that reproduce it.
+Enciphers or deciphers a text with a given key; the Enigma is reciprocal, so
+one command does both. Four-letter keys are in the order U, L, M, R
+(reflector, left, middle, right).
 
 ```bash
-# crib-drag (pin the key) -- use a crib from a clean stretch:
-python3 python/corpus_sweep.py data/messages/XMOT.json \
-        --crib MOVIMIENTOBARCOS --wirings F --all --procs 8
-# IoC-blind (no crib):
-python3 python/corpus_sweep.py data/messages/LUIS.json --wirings D F --procs 8
+python3 python/enigma_k.py --wiring F --order II-I-III \
+        --windows LUIS --ring UFSF --text "HORAS HOY ACCION"    # OBAL XWWB JUKR UF
+python3 python/enigma_k.py --json data/messages/XMOT.json        # replay a stored reading
+python3 python/enigma_k.py --json data/messages/LUIS.json --ring AMIF   # change part of the key
+python3 python/enigma_k.py --self-test data/messages/            # every solved message
 ```
 
-### `mixed_rotors.py` — mixed rotors, IoC-blind and consensus
-Tries rotors drawn from different wiring sets (`--mix`). With `--crib` it crib-drags
-(a single word or a file of words); without `--crib`, IoC-blind. With `--consensus` it
-merges the top decryptions into a consensus reading. Ranks and flags by count of real
-**Spanish words** (not by IoC, which can be inflated by degeneracy).
+## `corpus_sweep.py` — the key search
+
+With `--crib`, every key that turns a stretch of the ciphertext into the crib,
+with the full decrypt. Without it, a blind search over every Ringstellung,
+scored as Spanish (`lang_model.py`); it prints the best candidates and, apart,
+those that carry a run of W.
 
 ```bash
-python3 python/mixed_rotors.py data/messages/XMOT.json --mix --arr all --consensus --procs 12
-python3 python/mixed_rotors.py data/messages/DHZB.json \
-        --crib data/cribs/cribs_navales.txt --mix --arr all --procs 12
+python3 python/corpus_sweep.py data/messages/XMOT.json --crib MOVIMIENTOBARCOS --wirings F
+python3 python/corpus_sweep.py data/messages/DHZB.json --wirings F
 ```
 
-### `buttonup.py` — rotor wiring recovery
-Buttoning-up of the fast rotor and recovery of the interior rotors. Positive controls
-on F:
+Options: `--wirings D,F` (sets to try), `--all` (all 24 arrangements of the
+header letters, not only the manual's), `--grund XXXX` (a starting position
+for a message without a header), `--top N`, `--procs N`,
+`--notch III=22,II=15` (the stepping by hand: rod positions, a window letter
+such as `III=N`, or `none`), `--sweep-turnover right|middle|both` (also try the
+turnover at each of the 26 rod positions; 26 or 676 times the cost). Without the
+last two, the stepping is that of `data/wirings/wirings.json`.
+
+## `buttonup.py` — rotor wiring from a crib
+
+Knox's buttoning-up recovers the right rotor's wiring; the middle and left
+rotors follow from more crib. The self-tests run on wiring F:
 
 ```bash
-python3 python/buttonup.py --selftest-c        # right rotor
-python3 python/buttonup.py --selftest-middle    # middle rotor
-python3 python/buttonup.py --selftest-left      # left rotor
+python3 python/buttonup.py --selftest            # right rotor, Python
+python3 python/buttonup.py --selftest-c          # right rotor, C kernel
+python3 python/buttonup.py --selftest-middle     # middle rotor
+python3 python/buttonup.py --selftest-left       # left rotor
+python3 python/buttonup.py --selftest-external   # against the archival pairs
+python3 tests/corpus_buttonup.py                 # on the real traffic
 ```
 
-### `message_eval.py` — archive triage
-Per-message card (structure, Grundstellung, left-rotor position, cribs, recoverability)
-and depth planning across a directory.
+## `rods_frontend.py` — rod test and couplings
+
+The kernels of `librods` behind a command line: `brute` (exact crib over all
+rings), `coupling` (Turing's per-stretch couplings) and `link` (couplings
+linked across turnovers). Positive controls run first.
 
 ```bash
-python3 python/message_eval.py data/messages/
+python3 python/rods_frontend.py data/messages/XMOT.json --crib MOVIMIENTOBARCOS --wirings F
 ```
 
-## Notes
+## Tests
 
-- **Numbers** in this traffic are spelled out (`CUATRO`, `SIETE`, `OCHO`), not encoded
-  with `NR/XK`.
-- **Stepping**: the turnover model of these machines is calibrated in the tools, which
-  is why messages read cleanly from a single key. (Details and validation: paper in
-  preparation.)
-- **Message format**: JSON in `data/messages/` with `grundstellung`, `body` (cipher
-  groups, with `<PLAIN: ...>` inserts for in-clear text), `found_by` (credit to whoever
-  located the message) and `solution` (key, plaintext and a reproducible command).
+```bash
+sh tests/run_all.sh          # must pass before a release
+sh tests/compat_check.sh     # build, gate and two timed reference searches
+python3 tests/hw43_rod_square.py     # the Knox section's rod square, HW 43/7 pp. 16-19
+python3 tests/hw43_p90_buttonup.py   # its break of pp. 88-90, replayed
 ```
+
+## Message files
+
+`data/messages/README.md` describes the fields. Numbers in this traffic are
+spelled out (`CUATRO`, `SIETE`, `OCHO`); the manual's `NR`…`XK` brackets
+appear only in its own example.

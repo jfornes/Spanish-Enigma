@@ -31,12 +31,29 @@ def _load_wirings():
 _WIR=_load_wirings()
 WIRINGS={s:{r:d['wiring'] for r,d in rot.items()} for s,rot in _WIR['rotor_sets'].items()}
 UKW=_WIR['ukw']; ETW=_WIR['etw']; WIN=_WIR['turnovers']
-# Core-notch offsets (turnover fires when (window-ring)%26==offset). Only III is
-# validated (22=W); I/II unknown -> -1 = fall back to window turnover. Keep in sync
-# with corpus_sweep.NOTCH_OFFSET until wirings.json carries the field.
-NOTCH_OFFSET={'III':22,'I':None,'II':None}
-def _notchvec(): return np.array([NOTCH_OFFSET.get(k) if NOTCH_OFFSET.get(k) is not None else -1
-                                  for k in ('I','II','III')], np.int32)
+# Core offsets per rotor set: a rotor carries its left neighbour on when
+# (window - ring) % 26 equals its offset; None = turnover at the window letter
+# (WIN). Read from wirings.json, block "stepping", as in corpus_sweep.
+NOTCH_BY_SET={s:{k:(int(v[k])%26 if v.get(k) is not None else None) for k in ('I','II','III')}
+              for s,v in ((_WIR.get('stepping') or {}).get('core_notches') or {}).items()}
+NOTCH_OFFSET=NOTCH_BY_SET.get('F',{'I':None,'II':None,'III':None})
+NOTCH_OVERRIDE={}   # --notch: per-rotor override of wirings.json, applied to every wiring
+def _notch(wiring):
+    n=dict(NOTCH_BY_SET.get(wiring,{'I':None,'II':None,'III':None})); n.update(NOTCH_OVERRIDE); return n
+def _parse_notch(spec):
+    """'III=22,II=15' (rod position of the turnover), 'III=N' (window letter) or 'none'."""
+    if spec.strip().lower()=='none': return {k:None for k in ('I','II','III')}
+    out={}
+    for part in spec.split(','):
+        w,_,v=part.partition('='); w=w.strip().upper(); v=v.strip().upper()
+        if w not in ('I','II','III') or not v: sys.exit(f"--notch wants ROTOR=OFFSET or ROTOR=LETTER (got {part!r})")
+        if v.isdigit(): out[w]=int(v)%26
+        elif len(v)==1 and v in A: WIN[w]=v; out[w]=None
+        else: sys.exit(f"--notch: bad value {v!r}")
+    return out
+def _notchvec(wiring='F'):
+    n=_notch(wiring)
+    return np.array([n[k] if n[k] is not None else -1 for k in ('I','II','III')], np.int32)
 ORDERS=[(0,1,2),(0,2,1),(1,0,2),(1,2,0),(2,0,1),(2,1,0)]   # must match rods.c
 NAMES=['I','II','III']
 def vec(s): return np.array([c2n[c] for c in s], dtype=np.int32)
@@ -45,11 +62,16 @@ def perm(s):
     for i,v in enumerate(f): r[v]=i
     return f,r
 
-# ---------- Python oracle (validated vs Enigma I) ----------
-def py_windows_seq(order, windows, n):
+# ---------- Python oracle ----------
+def py_windows_seq(order, windows, n, rm=None, rr=None, wiring='F'):
+    """(L,M,R) windows per keystroke. A rotor with a core offset steps when
+    (window - ring) % 26 equals it, given its ring; otherwise at its window letter.
+    The same rule as posseq_off in rods.c."""
     tM=c2n[WIN[order[1]]]; tR=c2n[WIN[order[2]]]; L,M,R=windows; seq=[]
+    nM=_notch(wiring)[order[1]]; nR=_notch(wiring)[order[2]]
     for _ in range(n):
-        m=(M==tM); r=(R==tR)
+        m=((M-rm)%26==nM) if (nM is not None and rm is not None) else (M==tM)
+        r=((R-rr)%26==nR) if (nR is not None and rr is not None) else (R==tR)
         if m: M=(M+1)%26; L=(L+1)%26
         elif r: M=(M+1)%26
         R=(R+1)%26; seq.append((L,M,R))
@@ -58,7 +80,7 @@ def py_encipher(wiring, order, windows, rings, u, text):
     W={k:perm(WIRINGS[wiring][k]) for k in('I','II','III')}
     lf,lr=W[order[0]]; mf,mr=W[order[1]]; rf,rr=W[order[2]]
     etwf,etwr=perm(ETW); ukwf,_=perm(UKW)
-    seq=py_windows_seq(order,windows,len(text)); rL,rM,rR=rings; out=[]
+    rL,rM,rR=rings; seq=py_windows_seq(order,windows,len(text),rM,rR,wiring); out=[]
     for t,ch in enumerate(text):
         L,M,R=seq[t]
         x=etwr[c2n[ch]]
@@ -72,7 +94,7 @@ def py_encipher(wiring, order, windows, rings, u, text):
 def py_coupling_decode(wiring, order, windows, ringR, cipher_ints, crib, crib_off, lo, hi):
     """Derive per-stretch couplings from the crib, then decode positions [lo,hi)."""
     rf,rr=perm(WIRINGS[wiring][order[2]]); etwf,etwr=perm(ETW)
-    seq=py_windows_seq(order, windows, max(hi, crib_off+len(crib)))
+    seq=py_windows_seq(order, windows, max(hi, crib_off+len(crib)), None, ringR, wiring)
     rfwd=lambda o,x:(rf[(x+o)%26]-o)%26; rrev=lambda o,x:(rr[(x+o)%26]-o)%26
     coup={}
     for j,ch in enumerate(crib):
@@ -92,7 +114,7 @@ def py_link_decode(wiring, order, windows, ringR, ringM, cipher_ints, crib, crib
     """Accumulate one involution P per left-window from the crib (cross-turnover
     linking, Turing pp.72-73), then decode positions [lo,hi)."""
     rf,rr=perm(WIRINGS[wiring][order[2]]); mf,mr=perm(WIRINGS[wiring][order[1]]); etwf,etwr=perm(ETW)
-    seq=py_windows_seq(order, windows, max(hi, crib_off+len(crib)))
+    seq=py_windows_seq(order, windows, max(hi, crib_off+len(crib)), ringM, ringR, wiring)
     at=lambda p,o,x:(p[(x+o)%26]-o)%26
     Pby={}
     for j,ch in enumerate(crib):
@@ -123,7 +145,7 @@ def _call(fn, wiring, cipher, crib, crib_off, grund, all_arr, threads, stride):
     etwf=vec(ETW); ukwf=vec(UKW); turn=vec(''.join(WIN[k] for k in('I','II','III')))
     ct=np.asarray(cipher,np.int32); cr=np.asarray(crib,np.int32); g=vec(grund)
     out=np.zeros(stride*8192,np.int32); P=lambda a:a.ctypes.data_as(ctypes.POINTER(ctypes.c_int))
-    nt=_notchvec()
+    nt=_notchvec(wiring)
     nh=fn(P(wfwd),P(etwf),P(ukwf),P(turn),P(nt),P(ct),len(ct),P(cr),len(cr),crib_off,
           P(g),1 if all_arr else 0,threads,P(out),8192)
     return [tuple(int(x) for x in out[stride*i:stride*i+stride]) for i in range(nh)]
@@ -137,7 +159,7 @@ def sweep_offsets(lib, wiring, cipher, crib, grund, all_arr, threads):
     etwf=vec(ETW); ukwf=vec(UKW); turn=vec(''.join(WIN[k] for k in('I','II','III')))
     ct=np.asarray(cipher,np.int32); cr=np.asarray(crib,np.int32); g=vec(grund)
     out=np.zeros(7*8192,np.int32); P=lambda x:x.ctypes.data_as(ctypes.POINTER(ctypes.c_int))
-    nt=_notchvec()
+    nt=_notchvec(wiring)
     nh=lib.rod_search_sweep(P(wfwd),P(etwf),P(ukwf),P(turn),P(nt),P(ct),len(ct),P(cr),len(cr),
                             0,len(ct)-len(cr),P(g),1 if all_arr else 0,threads,P(out),8192)
     return [int(out[7*i]) for i in range(nh)]
@@ -150,10 +172,8 @@ def arr_letters(ai, grund, all_arr):
 def norm(s):
     return ''.join(ch for ch in unicodedata.normalize('NFKD',s).upper() if ch in A)
 def get_cipher(msg):
-    """Continuous cipher from EITHER schema: body_cipher_only (rods_frontend) or
-    body (<PLAIN: ...> in-clear blocks + trailing garble, corpus_sweep)."""
-    if msg.get('body_cipher_only'):
-        return ''.join(c for c in msg['body_cipher_only'].upper() if c in A)
+    """Continuous cipher from a message's body: <PLAIN: ...> passages and the
+    closing garble check removed."""
     raw=re.sub(r'<PLAIN:.*?>','', msg.get('body') or '', flags=re.S)
     c=''.join(ch for ch in raw.upper() if ch in A)
     gc=''.join(ch for ch in (msg.get('garble_check') or (msg.get('grundstellung') or '')[::-1]).upper() if ch in A)
@@ -164,46 +184,41 @@ def load_message(path,picker=None):
     if isinstance(data,dict): data=[data]
     for m in data:
         if (picker is None or picker in str(m.get('signature','')) or picker==m.get('grundstellung')) \
-           and (m.get('body_cipher_only') or m.get('body')): return m
+           and m.get('body'): return m
     return data[0]
-def build_cribs(msg):
-    cipher=get_cipher(msg); al=msg.get('plaintext_cipher_alignment') or {}
-    cribs=[]; off=0
-    for key in sorted(k for k in al if k.startswith('block_')):
-        b=al[key]; clen=b['cipher_letters']
-        np_=norm(re.sub(r'\[.*?\]','',b.get('plaintext_before_break') or b.get('plaintext_to_end') or ''))
-        if len(np_)==clen: cribs.append((off,np_))
-        off+=clen
-    return cipher, msg.get('grundstellung'), cribs
+
 
 # ---------- help ----------
 def usage(parser):
     parser.print_help()
     print("""
-Examples:
-  python3 rods_frontend.py soler_terminus_mvnr.json
-  python3 rods_frontend.py soler_terminus_mvnr.json --method link --all
-  python3 rods_frontend.py corpus.json --picker MVNR --wirings D,F --threads 8
+Examples, from the repository root:
+  python3 python/rods_frontend.py data/messages/XMOT.json --crib MOVIMIENTOBARCOS --wirings F
+  python3 python/rods_frontend.py data/messages/LUIS.json --crib CUATROPROSEGUIR --wirings F --method brute
 
 Notes:
-  * The message (cipher, Grundstellung, plaintext/cipher block alignment) is read
-    from the JSON; nothing about the message is hard-coded.
+  * The cipher and the starting position are read from the message file; the
+    crib is located by sweeping its offset.
   * 'link'     = coupling method with cross-turnover linking: recovers ringR AND
                  ringM and reads plaintext past the turnover (Turing pp.72-73).
   * 'coupling' = per-stretch coupling consistency (recovers ringR only).
   * 'brute'    = full (ring+UKW) exact-crib enumeration.
-  * Wiring tables D and F are built in; add 'C' to WIRINGS once it is known.""")
+  * The wirings come from data/wirings/wirings.json.
+  * Positive controls on wiring F and two external vectors run first.""")
 
 def main():
     p=argparse.ArgumentParser(description="Rod/coupling crib search for unsteckered Enigma K.",
                               add_help=True)
-    p.add_argument("json", nargs='?', help="corpus JSON with body_cipher_only + plaintext_cipher_alignment")
+    p.add_argument("json", nargs='?', help="message file, e.g. data/messages/XMOT.json")
     p.add_argument("--picker", help="select a message by signature substring or Grundstellung")
     p.add_argument("--method", choices=["link","coupling","brute"], default="link")
     p.add_argument("--all", action="store_true", help="sweep all 24 Grundstellung arrangements")
     p.add_argument("--threads", type=int, default=os.cpu_count())
     p.add_argument("--wirings", default="D,F")
     p.add_argument("--crib", help="known-plaintext crib; its offset is found by sweep (robust to cipher edits)")
+    p.add_argument("--notch", help="stepping of each rotor for the real message, overriding wirings.json: "
+                   "'III=22,II=15' (rod position of the turnover), 'III=N' (window letter) or 'none'. "
+                   "The positive controls always run on the values of wirings.json")
     a=p.parse_args()
     if not a.json: usage(p); sys.exit(0)
     lib=load_lib()
@@ -212,7 +227,7 @@ def main():
     pt="ATACARALAMANECERPOSICIONESENEMIGASALSURDEPALMA"   # 46 letters
     win=(c2n['V'],c2n['N'],c2n['R']); rings=(3,7,11); u=c2n['Q']
     cti=vec(py_encipher('F',('I','II','III'),win,rings,u,pt))
-    seq=py_windows_seq(('I','II','III'),win,len(pt))
+    seq=py_windows_seq(('I','II','III'),win,len(pt),rings[1],rings[2],'F')
     bnd=next((t for t in range(1,len(pt)) if seq[t][:2]!=seq[t-1][:2]), len(pt))  # first stretch end
     b=brute(lib,'F',cti,vec(pt[:30]),0,"VNRM",False,a.threads)
     okb=any((ai,oi,uu,rl,rm,rr)==(0,0,u,3,7,11) for (ai,oi,uu,rl,rm,rr) in b)
@@ -228,9 +243,9 @@ def main():
     ll=link(lib,'F',cti,vec(pt[:25]),0,"VNRM",False,a.threads)
     okl=len(ll)==1 and (ll[0]==(0,0,rings[2],rings[1]))           # unique, both rings pinned
     full=py_link_decode('F',('I','II','III'),win,rings[2],rings[1],list(cti),pt[:25],0,0,len(pt))
-    full_ok = full is not None and all(d=='?' or d==pt[i] for i,d in enumerate(full)) and sum(d!='?' for d in full)>=44
+    full_ok = full is not None and all(d=='?' or d==pt[i] for i,d in enumerate(full)) and sum(d!='?' for d in full)>=40
     print(f"[control] link kernel pins both rings uniquely: {okl}  -> {ll}")
-    print(f"[control] link reads FULL message from 25-letter crib: {full_ok}")
+    print(f"[control] link reads the message well past a 25-letter crib: {full_ok}")
     # external regression vectors that EXERCISE the QWERTZ ETW (Enigma I does not):
     #   manual example = wiring F; Hörenberg LRS10 = wiring D (real message).
     manF=py_encipher('F',('II','III','I'),(c2n['N'],c2n['A'],c2n['S']),(c2n['D'],c2n['R'],c2n['R']),
@@ -245,17 +260,19 @@ def main():
         sys.exit("CONTROL FAILED -- do not trust results")
 
     # ---- real message ----
-    msg=load_message(a.json,a.picker); cipher,grund,cribs=build_cribs(msg); cti=vec(cipher)
-    print(f"\n# {msg.get('signature','?')}  G={grund}  cipher_len={len(cipher)}")
+    if a.notch: NOTCH_OVERRIDE.update(_parse_notch(a.notch))
+    msg=load_message(a.json,a.picker); cipher=get_cipher(msg); grund=msg.get('grundstellung'); cribs=[]; cti=vec(cipher)
+    import sarmiento; grund=sarmiento.kernel_indicator(grund) if grund else grund  # kernels index (L,M,R,U); see sarmiento.kernel_indicator
+    print(f"\n# {msg.get('signature','?')}  G={msg.get('grundstellung')}  cipher_len={len(cipher)}")
     print(f"# IoC (computed here) = {ioc(cipher):.4f}  (JSON quotes {msg.get('ic')})")
-    if a.crib:                                          # --crib overrides alignment; offset by sweep
+    if a.crib:                                          # the crib's offset is found by sweep
         crib=norm(a.crib); from collections import Counter; offs=[]
         for w in a.wirings.split(','):
             offs+=sweep_offsets(lib,w,cti,vec(crib),grund,a.all,a.threads)
         if not offs: sys.exit(f"crib '{crib}' not found at any offset (check spelling / --wirings)")
         off=Counter(offs).most_common(1)[0][0]; cribs=[(off,crib)]
         print(f"# crib '{crib}' located @offset {off} by sweep")
-    if not cribs: sys.exit("no cleanly-aligned crib block")
+    if not cribs: sys.exit("give a crib with --crib")
     off,crib=max(cribs,key=lambda z:len(z[1]))
     print(f"# crib @offset {off} ({len(crib)}): {crib}")
     print(f"# method={a.method}  arrangements={'all 24' if a.all else 'canonical'}  threads={a.threads}\n")

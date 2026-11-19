@@ -17,10 +17,7 @@ endif
 $(LIB): rods.c
 	$(CC) $(CFLAGS) $(ARCH) $(SHARED) -o $(LIB) rods.c -lpthread
 
-run: $(LIB)
-	python3 rods_frontend.py soler_terminus_mvnr.json
-
 clean:
 	rm -f librods.so librods.dylib
 
-.PHONY: run clean
+.PHONY: clean

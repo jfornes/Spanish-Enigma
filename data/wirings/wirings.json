@@ -1,49 +1,94 @@
 {
-  "description": "Commercial Enigma K wirings and static components — Spanish Civil War traffic (Salamanca <-> Baleares, 1936-37).",
+  "description": "Commercial Enigma K: the static components and the two rotor sets in print, D and F, as the engine uses them.",
   "alphabet": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
   "etw": "QWERTZUIOASDFGHJKPYXCVBNML",
   "ukw": "IMETCGFRAYSQBZXWLHKDVUPOJN",
+  "stepping": {
+    "condition": "A rotor carries its left neighbour on when (window - ring) mod 26 equals its value in core_notches. A rotor whose value is null turns over at its window letter in 'turnovers'.",
+    "indicator": "The four letters sent in clear as group 3 are read as the windows in the order (reflector, left, middle, right): drums 0 to 3 from left to right, the convention of the worked example in Sarmiento's manual (MNAS). Read that way, LUIS (6 December 1936), DHZB (7 December) and MVNR (9 December) need the same Ringstellung, UFSF, and XMOT (11 December) needs AMIF, still F on the right: rotor order and Ringstellung were set for a period, as the manual prescribes, and group 3 per message. This does not depend on the stepping: the Ringstellung is the window minus the offset, and a decrypt fixes the offsets.",
+    "readings": {
+      "a": "The header letters are the windows, and the notch acts at a fixed core offset (III 22, II 15).",
+      "b": "The notch is on the ring, catch N for III as on the surviving machines. III's Ringstellung was then R in every message, the value the manual's own worked example gives it, and the header letters are the windows displaced by a constant per drum, also fixed for the period (14 on the right-hand drum, 6-11 December 1936)."
+    },
+    "preferred_reading": "b, with Turing's description and the two surviving machines (see 'machines'). Reading a fits the traffic equally, and the traffic alone cannot exclude it. The engine computes in the representation of a, which reproduces every message from the header letters as transmitted; under b the Ringstellungen it stores include the constant.",
+    "machines": "The two surviving machines measured, A1242 (Museo Historico Militar de Cartagena; Angel Tarifa and Juan Antonio Sanchez Chumillas, November 2025) and A-1233 (Museo del Ejercito; Arturo Quirantes, February 2009), carry the notch on the alphabet ring, with catch letters Y, E, N for rotors I, II, III.",
+    "core_notches": {
+      "F": {
+        "III": 22,
+        "II": 15,
+        "I": null
+      },
+      "D": {
+        "III": null,
+        "II": null,
+        "I": null
+      }
+    },
+    "core_notches_D_note": "Each rotor steps by the rule of its own set. D's nulls mean turnover at the window letters in 'turnovers', as 'condition' says; the offsets measured on F do not carry over to D. The one real message on wiring D, LRS10 (a naval-attaché draft from J. R. Soler's archive, read by M. Hörenberg), reads 90 of 90 letters with rotor III turning over at window N, ring H, and does not read with F's offsets (tests/lrs10_control.py).",
+    "core_notches_measured_on": {
+      "F.III": "XMOT, LUIS, DHZB, MVNR (right slot); MKCX, MNAS (middle slot) consistent",
+      "F.II": "MKCX",
+      "F.I": "undetermined as a core offset; MNAS gives window Y",
+      "D": "undetermined; no message in this corpus reads on wiring D"
+    },
+    "turnover_evidence": {
+      "F.III": "Right slot, ring F: LUIS, DHZB, MVNR and XMOT all need window B. Middle slot: MKCX (ring H) needs C or D over the span it reads; MNAS gives III ring R and excludes windows A to D. No single window letter fits all six; core offset 22 does: F+22 = B, H+22 = D, R+22 = N.",
+      "F.II": "MKCX, the only message with II on the right (ring U): window J, core offset 15. One message cannot separate the two representations.",
+      "F.I": "MNAS (right slot, ring R): window Y, equivalently core offset 7. MVNR (middle slot, ring S) excludes windows N to U."
+    },
+    "reference": "Method and evidence: the accompanying technical paper."
+  },
+  "turnovers_note": "Window letters at which each rotor carries its neighbour on: the catch letters of the surviving machines A1242 and A-1233. Used for a rotor whose core offset is null (rotor I, where MNAS gives Y). enigma_k.py --turnover overrides them per run.",
   "turnovers": {
     "I": "Y",
     "II": "E",
     "III": "N"
   },
-  "source": "Soler Fuensanta, Lopez-Brea Espiau & Weierud, 'Enigma variations: an extended family of machines', Cryptologia 34(4), 2010. D and F recovered from captured Heimsoeth & Rinke / ChiMaG manufacturer documents (TICOM), not cryptanalytically.",
+  "notch_to_window_note": "On the Enigma K the notch is cut in the alphabet ring. Soler Fuensanta, Lopez-Brea Espiau and Weierud (2010, figs. 17-18) give for each rotor of D and F the ring letter of its notch (G, M, V for I, II, III) and the window letter at which it turns over (Y, E, N). The two differ by the same 18 positions on every rotor of both sets, window = notch + 18 mod 26: the distance on the machine between the window and the point where the pawl meets the notch. The rotors' notch_letter and turnover_window record the pair.",
+  "notch_to_window": 18,
+  "source": "Soler Fuensanta, Lopez-Brea Espiau and Weierud, 'Spanish Enigma: A History of the Enigma in Spain', Cryptologia 34(4), 2010. D and F come from captured Heimsoeth & Rinke / ChiMaG documents (TICOM). The core offsets in 'stepping' are measured on the traffic; see stepping.reference.",
   "sets_status": {
     "D": "available (captured documents)",
     "F": "available (captured documents)",
     "A": "not available",
     "B": "not available",
-    "E": "not available",
-    "C": "NOT available — cryptanalytic recovery target (DHZB / LUIS / MVNR traffic)"
+    "C": "not available",
+    "E": "not available"
   },
+  "rotor_sets_note": "'notch_letter' is the ring letter of the notch and 'turnover_window' the window letter at which the rotor turns over, 18 positions further (see notch_to_window_note; the catch letters of the surviving machines, turnovers_note); the offsets that reproduce the traffic are in stepping.core_notches.",
   "rotor_sets": {
     "D": {
       "I": {
         "wiring": "CIAHFQOYBXNUWJLVGEMSZKPDTR",
-        "turnover": "Y"
+        "notch_letter": "G",
+        "turnover_window": "Y"
       },
       "II": {
         "wiring": "KEDXVBSQHNCZTRUFLOAYWIPMJG",
-        "turnover": "E"
+        "notch_letter": "M",
+        "turnover_window": "E"
       },
       "III": {
         "wiring": "NUJPHWFMGDOBAVZQTXECLKYSIR",
-        "turnover": "N"
+        "notch_letter": "V",
+        "turnover_window": "N"
       }
     },
     "F": {
       "I": {
         "wiring": "HFOTWPDURMCGXJLQEIVZSKBNAY",
-        "turnover": "Y"
+        "notch_letter": "G",
+        "turnover_window": "Y"
       },
       "II": {
         "wiring": "MUHTASIPJYNCVKLOXFDZEGQBWR",
-        "turnover": "E"
+        "notch_letter": "M",
+        "turnover_window": "E"
       },
       "III": {
         "wiring": "DKWOJVUNGLFTZCSYIBEARHXQPM",
-        "turnover": "N"
+        "notch_letter": "V",
+        "turnover_window": "N"
       }
     }
   }

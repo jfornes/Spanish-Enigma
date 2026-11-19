@@ -1,22 +1,82 @@
 {
-  "grundstellung": "MKCX",
-  "body": "HUEQ GPGJ HLHF VUAC SAHM ZHPQ KGYH IEBU NVNS LYHU DEPW PHUW GFNX JQXN FPNX EJBT IVWZ UFQZ MNMP VOZC VPTG RYYZ VHNB YRVE YDRR KRAZ HASH QYQL AAKI KFQF JDHG OWKA SKTC BUSQ NMGC VNLG QZKB SFAV ZBRL JOWC JALW XSAL",
-  "garble_check": "XCKM",
-  "header": "Procedencia EGZ=Palma; Destino EFGC=Salamanca; nr 56 p 52 el 5 a las 18,35; 'Comandante mar Baleares al Generalisimo'",
-  "found_by": "Jordi Fornés",
-  "notes": "Transcrit de msg7.png. Grund HIPOTESI: ultim grup XCKM invertit = MKCX (patro garble-check com XMOT/LUIS/DHZB). Dues posicions dubtoses: els '8' de EJ8T i VHN8, transcrits provisionalment com a S. n=168.",
+  "id": "MKCX",
   "status": {
     "solved": true,
-    "confidence": "alta (contingut castella llegible) / stepping del rotor II encara per calibrar del tot",
+    "summary": "Read in part: letters 34 to 142, 109 of 168. The first 33 and the last 26 do not read under any key."
+  },
+  "classification": "enigma_k",
+  "found_by": "Jordi Fornés",
+  "archive": "CDMH",
+  "signature": "Caja 745",
+  "sheet": {
+    "id": "CDMH.C745.msg7",
+    "description": "A working copy in pencil, not a reception form: a legend of call signs across the top (Procedencia EGZ = Palma, Destino EFGC = Salamanca), a clear preamble, and the body copied by hand. There is no stamp.",
+    "receipt_stamps": []
+  },
+  "date_transmission": null,
+  "date_note": "The preamble gives 'el 5 a las 18,35'. The sheet carries no stamp, so the month and year are unknown.",
+  "sender": "Comandante de Marina de Baleares (Palma de Mallorca)",
+  "recipient": "Generalísimo (Salamanca), as the clear preamble gives it",
+  "preamble_clear": "Procedencia EGZ = Palma; Destino EFGC = Salamanca; nr 56 p 52 el 5 a las 18,35; Comandante mar Baleares al Generalisimo",
+  "grundstellung": "MKCX",
+  "body": "HUEQ GPGJ HLHF VUAC SAHM ZHPQ KGYH IEBU NVNS LYHU DEPW PHUW GFNX JQXN FPNX EJBT IVWI UFQZ MNMP VOZC VPTG RYYZ VHNB VRVE YDRR KRAZ HASH QYQL AAKI KFQF JDHG OWKA SKTC BUJQ NMGC VNLG QZKB SFAV ZBRL JOWC JALW XJAL",
+  "garble_check": "XCKM",
+  "reference": "ref 1441 y 49",
+  "n": 168,
+  "ic": 0.0373,
+  "notes": "The four-group header is not on the sheet. The starting position is the closing group XCKM reversed, which the reading confirms. The cipher names General Cánovas; 'al Generalísimo' belongs to the interceptor's clear preamble. This is the only message with rotor II on the right.",
+  "transcription": {
+    "copyist": "The copyist writes A like an H with a bar across the top and confuses S with J. Two glyphs first read as 8 (groups 16 and 23) are B.",
+    "emended": [
+      {
+        "letter": 68,
+        "group": 17,
+        "was": "IVWZ",
+        "now": "IVWI",
+        "gives": "INQUEBRANTABLE"
+      },
+      {
+        "letter": 93,
+        "group": 24,
+        "was": "YRVE",
+        "now": "VRVE",
+        "gives": "MI FE EN LOS DESTINOS"
+      },
+      {
+        "letter": 135,
+        "group": 34,
+        "was": "BUSQ",
+        "now": "BUJQ",
+        "gives": "VIVA EL CAUDILLO"
+      }
+    ],
+    "confirmed": {
+      "letter": 80,
+      "group": "VOZC",
+      "note": "The C is correct on the original. The plaintext there is N where ADHESION wants H: LEAL AD[N]ESION."
+    }
+  },
+  "solution": {
     "wiring": "F",
     "rotor_order": "I-III-II",
-    "grundstellung": "MKCX (hipotesi: ultim grup XCKM invertit -> CONFIRMADA)",
-    "reading": "...AL GENERAL[ISIMO]... REITERO MI... Y LEAL[T]AD... [AD]HESION... EN LOS DESTINOS DE LA PATRIA REGIDA POR... [V]IVA EL [C]AUDILLO",
-    "content": "Missatge d'adhesio i lealtat al Caudillo, del Comandante de Marina de Balears al Generalisimo.",
-    "recovered_by": "toolkit (IoC-blind corpus_sweep --all --wirings D,F)",
-    "solved_date": "2026-07-08",
-    "note": "Rotor II a la dreta (ordre I-III-II). Residu de garble = el notch del II encara no esta calibrat net (valor preliminar ~P). HUEQ es el primer missatge que porta el II a la dreta -> permet pinar-lo."
+    "windows_ULMR": "MKCX",
+    "ringstellung_ULMR": "LJHU",
+    "offsets_ULMR": "BBVD",
+    "plaintext": "YAAUQKSNLANSOTDEIFFULRWOYRNOHCLASALGENERALCANOVASREITEROMIINQUEBRANTABLEYLEALADNESIONAVEYMIFEENLOSDESTINOSDELAPATRIAREGIDAPORVEWVIVAELCAUDILLOASLYGNTJXCCCGAFFEMSNKYDGZD",
+    "reading": "[33 letters do not read] AL GENERAL CANOVAS REITERO MI INQUEBRANTABLE Y LEAL AD[N]ESION A V.E. Y MI FE EN LOS DESTINOS DE LA PATRIA REGIDA POR V.E. VIVA EL CAUDILLO [26 letters do not read]",
+    "unread_ends": {
+      "head_letters": 33,
+      "tail_letters": 26
+    },
+    "command": "python3 python/corpus_sweep.py data/messages/MKCX.json --wirings F",
+    "command_note": "No crib: the key comes first by score.",
+    "verified_with": "python3 python/enigma_k.py --json data/messages/MKCX.json"
   },
-  "label": "MKCX",
-  "aka": "HUEQ (etiqueta antiga = primer grup xifrat, abans de recuperar el grund)"
+  "negative_results": [
+    {
+      "swept": "Wiring F: six rotor orders, the 24 assignments of the starting letters, the whole ring space.",
+      "result": "No key reads all 168 letters; the key above is the global optimum.",
+      "explanation": "The unread ends belong to the message as copied, not to the key. The head is 33 letters, not a whole number of groups."
+    }
+  ]
 }

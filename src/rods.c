@@ -13,16 +13,22 @@
  *   contradictions (= the strongest possible chain of clicks). We test the crib
  *   letter by letter and abandon a configuration at the first contradiction.
  *   The wheel substitution is held as Turing's "rod square" (offset x contact
- *   lookup tables), built once. Stepping is A27: turnover keyed to the WINDOW
- *   letter, ring-independent (Turing pp. 4-5; Soler/Lopez-Brea/Weierud 2010).
+ *   lookup tables), built once.
  *
- * SCOPE / HONESTY
- *   NOT yet implemented: the coupling propagation past a turnover (Turing
- *   pp. 72-73) that lets rodding AVOID enumerating the Ringstellung. This kernel
- *   still enumerates the Ringstellung+UKW grid, but with the click early-exit
- *   and threads. The engine matches the validated Python oracle bit-for-bit
- *   (see the front-end's positive control) -- the brief's precondition before
- *   optimizing.
+ * STEPPING
+ *   A rotor with a core offset carries its left neighbour on when
+ *   (window - ring) mod 26 equals that offset; a rotor without one turns over
+ *   at its window letter. The front-end passes offsets and letters in from
+ *   data/wirings/wirings.json.
+ *
+ * KERNELS (exported)
+ *   rod_search            exact crib over all rings and reflector offsets
+ *   rod_search_sweep      the same, with the crib position unknown
+ *   coupling_search       Turing's per-stretch coupling test (right ring only)
+ *   coupling_link_search  couplings linked across turnovers (right and middle rings)
+ *   buttonup_anchor       Knox's buttoning-up of the right rotor's wiring
+ *   Each is checked against the Python oracle of its front-end (the positive
+ *   controls of rods_frontend.py and buttonup.py).
  */
 #include <stdlib.h>
 #include <string.h>
@@ -80,8 +86,8 @@ static void build_rods(Ctx *c, const int *wfwd, const int *etw_fwd,
 
 /* posseq: fill Lp/Mp/Rp[0..upto) with the (left,mid,right) WINDOW letters at each
  * keystroke, from start windows Lw/Mw/Rw and the mid/right turnover letters tM/tR.
- * A27 stepping: a wheel turns when its WINDOW reaches its turnover letter (ring-
- * independent); the middle wheel double-steps. Rings are applied later as offsets. */
+ * Window-letter stepping: a wheel turns when its WINDOW reaches its turnover letter
+ * (ring-independent); the middle wheel double-steps. Rings are applied later as offsets. */
 static void __attribute__((unused)) posseq(int Lw,int Mw,int Rw,int tM,int tR,int upto,
                    int *Lp,int *Mp,int *Rp){
     int L=Lw,M=Mw,R=Rw;
@@ -96,8 +102,8 @@ static void __attribute__((unused)) posseq(int Lw,int Mw,int Rw,int tM,int tR,in
 
 /* posseq_off: like posseq but the turnover is CORE-based -- a wheel steps when its
  * OFFSET (window-ring) reaches the notch offset nM/nR. Falls back to the window
- * turnover (tM/tR) for any wheel whose notch offset is <0 (not yet determined).
- * Since the RIGHT turnover now depends on rR, callers must recompute this per rR. */
+ * turnover (tM/tR) for any wheel whose notch offset is <0. The sequence depends on
+ * rR (and on rM when the middle wheel has an offset), so callers recompute it per ring. */
 static void posseq_off(int Lw,int Mw,int Rw,int tM,int tR,int nM,int nR,int rM,int rR,int upto,
                        int *Lp,int *Mp,int *Rp){
     int L=Lw,M=Mw,R=Rw;
@@ -170,7 +176,10 @@ static void *worker(void *p){
 }
 
 /* rod_search (EXPORTED): full exact-crib search. Builds the rod tables, sets the
- * arrangement set (canonical (0,1,2) with UKW=grund[3], or all 24 if all_arr!=0),
+ * arrangement set (canonical (0,1,2) with UKW=grund[3], or all 24 if all_arr!=0).
+ * grund is the transmitted group ROTATED to (L,M,R,U) by the caller
+ * (sarmiento.kernel_indicator), so the canonical arrangement is Sarmiento's:
+ * windows = the group as sent, (U,L,M,R).
  * launches nthreads workers and joins them. Returns #hits; each hit = 6 ints
  * [arrangement, order, ukw_offset, ringL, ringM, ringR]. */
 int rod_search(const int *wfwd, const int *etw_fwd, const int *ukw_fwd, const int *turn,
@@ -217,9 +226,9 @@ int rod_search(const int *wfwd, const int *etw_fwd, const int *ukw_fwd, const in
  * (when the M or L window changes). This needs NO L/M ring or UKW enumeration:
  * the search is order x arrangement x right-wheel-ring only (24*6*26).
  *
- * NOTE (scope): this is the per-stretch coupling-consistency filter. Linking Q
- * across a turnover through the middle-wheel rods (pp. 72-73), which pins the
- * middle-wheel position, is the further refinement and is not done here.
+ * This is the per-stretch coupling-consistency filter. Linking Q across a
+ * turnover through the middle-wheel rods (pp. 72-73), which pins the middle-wheel
+ * position, is coupling_link_search below.
  * ------------------------------------------------------------------------- */
 /* cworker (for coupling_search): strides over arrangement x order x right-ring;
  * builds the per-stretch coupling involution Q from the crib and rejects the rod
@@ -328,8 +337,8 @@ static void *lworker(void *p){
         int oi=q%6; int ai=q/6;
         int Lw=c->grund[c->arr[ai][0]], Mw=c->grund[c->arr[ai][1]], Rw=c->grund[c->arr[ai][2]];
         int wM=ORDERS[oi][1], wR=ORDERS[oi][2];
-        /* rM is enumerated in the outer index and passed through, so a core-notch middle
-         * (stepping depends on ringM) is handled correctly here -- no rm=0 bug in lworker. */
+        /* rM is enumerated in the outer index and passed through, so a middle wheel
+         * with a core offset (stepping depends on ringM) is handled exactly. */
         posseq_off(Lw,Mw,Rw,c->turn[wM],c->turn[wR],c->notch[wM],c->notch[wR],rM,rR,upto,Lp,Mp,Rp);
         for (int i=0;i<AL;i++) for (int k=0;k<AL;k++) P[i][k]=-1;
         int ok=1;
@@ -383,8 +392,8 @@ int coupling_link_search(const int *wfwd, const int *etw_fwd, const int *ukw_fwd
 
 /* ---------------------------------------------------------------------------
  * rod_search_sweep : like rod_search but sweeps the crib over ALL offsets in
- * [off_lo, off_hi]. Used by the corpus survey tool when the crib position is
- * unknown. Threads partition the offsets; each thread runs the full
+ * [off_lo, off_hi], for when the crib position is unknown (corpus_sweep,
+ * rods_frontend). Threads partition the offsets; each thread runs the full
  * arrangement x order x 26^4 enumeration per offset. Hit = 7 ints:
  *   [crib_off, arrangement, order, ukw_offset, ringL, ringM, ringR]
  * ------------------------------------------------------------------------- */
@@ -491,8 +500,7 @@ int rod_search_sweep(const int *wfwd, const int *etw_fwd, const int *ukw_fwd, co
  * constraint propagation + backtracking to recover rf. Threads partition the
  * 676 anchor seeds. Each full, consistent rf is written (26 ints) to out.
  *
- * Backtracking state is copied by value (simple + correct); if profiling on
- * many cores shows this dominates, switch to undo-based propagation.
+ * Backtracking state is copied by value, which keeps each branch independent.
  * ------------------------------------------------------------------------- */
 #define MAXSTR 8
 #define BU_NODECAP 2000000L

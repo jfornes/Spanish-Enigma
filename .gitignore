@@ -4,3 +4,12 @@ librods.dylib
 __pycache__/
 *.pyc
 .DS_Store
+
+# archive photographs are never committed (size; reproduction terms)
+*.jpg
+*.jpeg
+*.JPG
+*.heic
+*.HEIC
+*.tif
+*.tiff

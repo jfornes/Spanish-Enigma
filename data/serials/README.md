@@ -1,7 +1,7 @@
 # data/serials/ — machine & station registry
 
 `machine_registry.json` catalogues the Enigma machines and cipher stations of the
-Spanish theatre so intercepts from the Caja 745 (and beyond) can be attributed.
+Spanish theatre so that intercepts from Caja 745 and beyond can be attributed.
 
 ## Two independent axes
 - **Machine type** (chassis): `commercial_unsteckered` (Spanish/Italian "Dora"
@@ -9,8 +9,9 @@ Spanish theatre so intercepts from the Caja 745 (and beyond) can be attributed.
   naval, plugboard), `legion_condor_numbered` (German, plugboard, **numbers** on
   the rotors).
 - **Wiring** (rotor *Schaltung*, German phonetic names): **C** = Cäsar
-  (unpublished — the DHZB/LUIS recovery target), **D** = Dora (Schaltung D), **F**
-  = Friedrich. A single commercial chassis could carry D, F or C by batch/channel.
+  (unpublished), **D** = Dora (Schaltung D), **F** = Friedrich. A single commercial
+  chassis could carry D, F or C by batch or channel. Every message read in this
+  corpus is on F.
   Note: *Schaltung D (Dora)* is a **wiring**, not a machine model, and is distinct
   from reflector *UKW D*.
 
